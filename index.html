@@ -510,9 +510,9 @@
   const QUESTIONS_PER_ROUND = 10;
   const SWIPE_THRESHOLD = 40;
   const FLAG_DRAG_MAX = 72;
-  const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 1400;
-  const FEEDBACK_AUTO_DISMISS_WRONG_MS = 2800;
-  const FEEDBACK_TAP_EARLY_MS = 500;
+  const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
+  const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
+  const FEEDBACK_TAP_EARLY_MS = 400;
   const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
   const WORD_LABELS = {
     hello: 'Hello',
@@ -901,15 +901,17 @@
     }
 
     var autoDismissMs = isCorrect ? FEEDBACK_AUTO_DISMISS_CORRECT_MS : FEEDBACK_AUTO_DISMISS_WRONG_MS;
-    feedbackContinue.textContent = 'Tap to skip';
-    feedbackTimer.textContent = 'Next question in ' + (autoDismissMs / 1000).toFixed(1) + 's';
+    feedbackContinue.textContent = isCorrect ? '' : 'Tap to skip';
+    feedbackTimer.textContent = isCorrect ? '' : 'Next question in ' + (autoDismissMs / 1000).toFixed(1) + 's';
 
     clearFeedbackTimers();
-    feedbackCanDismiss = false;
+    feedbackCanDismiss = isCorrect;
 
-    feedbackDismissTimer = setTimeout(function () {
-      feedbackCanDismiss = true;
-    }, FEEDBACK_TAP_EARLY_MS);
+    if (!isCorrect) {
+      feedbackDismissTimer = setTimeout(function () {
+        feedbackCanDismiss = true;
+      }, FEEDBACK_TAP_EARLY_MS);
+    }
 
     feedbackAutoDismissTimer = setTimeout(function () {
       dismissFeedback(true);
