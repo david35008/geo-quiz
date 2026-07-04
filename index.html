@@ -278,6 +278,21 @@
       font-size: clamp(5rem, 20vw, 8rem);
       line-height: 1;
       filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+      transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+      will-change: transform;
+      cursor: grab;
+      touch-action: none;
+      z-index: 2;
+      user-select: none;
+    }
+
+    .flag-center.dragging {
+      transition: none;
+      cursor: grabbing;
+    }
+
+    .game-area.is-dragging .dir-option {
+      pointer-events: none;
     }
 
     .swipe-hint {
@@ -318,6 +333,12 @@
       margin-top: 32px;
       font-size: 0.9rem;
       opacity: 0.7;
+    }
+
+    #screen-feedback .feedback-timer {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      opacity: 0.55;
     }
 
     /* Round summary */
@@ -440,14 +461,15 @@
       <div class="dir-option dir-right" data-dir="right" id="opt-right"></div>
       <div class="dir-option dir-down"  data-dir="down"  id="opt-down"></div>
     </div>
-    <p class="swipe-hint" id="swipe-hint">Swipe toward your answer ↑ ↓ ← →</p>
+    <p class="swipe-hint" id="swipe-hint">Drag the flag toward your answer ↑ ↓ ← →</p>
   </section>
 
   <!-- Feedback -->
   <section id="screen-feedback" class="screen">
     <h2 id="feedback-title"></h2>
     <div class="feedback-detail" id="feedback-detail"></div>
-    <p class="feedback-continue">Tap to continue</p>
+    <p class="feedback-continue" id="feedback-continue">Tap to continue</p>
+    <p class="feedback-timer" id="feedback-timer"></p>
   </section>
 
   <!-- Round summary -->
@@ -487,6 +509,10 @@
   const STORAGE_KEY = 'geoQuizPlayer';
   const QUESTIONS_PER_ROUND = 10;
   const SWIPE_THRESHOLD = 40;
+  const FLAG_DRAG_MAX = 72;
+  const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 1400;
+  const FEEDBACK_AUTO_DISMISS_WRONG_MS = 2800;
+  const FEEDBACK_TAP_EARLY_MS = 500;
   const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
   const WORD_LABELS = {
     hello: 'Hello',
@@ -653,10 +679,13 @@
   var homePlayerName = document.getElementById('home-player-name');
   var changeNameBtn = document.getElementById('change-name');
   var gameArea = document.getElementById('game-area');
+  var gameFlag = document.getElementById('game-flag');
   var swipeHint = document.getElementById('swipe-hint');
   var feedbackScreen = document.getElementById('screen-feedback');
   var feedbackTitle = document.getElementById('feedback-title');
   var feedbackDetail = document.getElementById('feedback-detail');
+  var feedbackContinue = document.getElementById('feedback-continue');
+  var feedbackTimer = document.getElementById('feedback-timer');
   var btnNextRound = document.getElementById('btn-next-round');
   var btnGoHome = document.getElementById('btn-go-home');
 
@@ -674,6 +703,7 @@
   var inputLocked = false;
   var feedbackCanDismiss = false;
   var feedbackDismissTimer = null;
+  var feedbackAutoDismissTimer = null;
 
   function showScreen(name) {
     Object.keys(screens).forEach(function (k) {
@@ -810,6 +840,7 @@
       dirEls[dir].textContent = q.mapping[dir];
       dirEls[dir].classList.remove('highlight');
     });
+    resetFlagPosition();
   }
 
   function scoreAnswer(isCorrect, elapsedMs) {
@@ -847,6 +878,17 @@
     showFeedback(isCorrect, chosen, q.correct, points);
   }
 
+  function clearFeedbackTimers() {
+    if (feedbackDismissTimer) {
+      clearTimeout(feedbackDismissTimer);
+      feedbackDismissTimer = null;
+    }
+    if (feedbackAutoDismissTimer) {
+      clearTimeout(feedbackAutoDismissTimer);
+      feedbackAutoDismissTimer = null;
+    }
+  }
+
   function showFeedback(isCorrect, chosen, correct, points) {
     feedbackScreen.className = 'screen active ' + (isCorrect ? 'correct' : 'wrong');
     feedbackTitle.textContent = isCorrect ? 'Correct!' : 'Wrong';
@@ -858,16 +900,25 @@
         '<p>Correct answer: <strong>' + correct + '</strong></p>';
     }
 
+    var autoDismissMs = isCorrect ? FEEDBACK_AUTO_DISMISS_CORRECT_MS : FEEDBACK_AUTO_DISMISS_WRONG_MS;
+    feedbackContinue.textContent = 'Tap to skip';
+    feedbackTimer.textContent = 'Next question in ' + (autoDismissMs / 1000).toFixed(1) + 's';
+
+    clearFeedbackTimers();
     feedbackCanDismiss = false;
-    if (feedbackDismissTimer) clearTimeout(feedbackDismissTimer);
-    feedbackDismissTimer = setTimeout(function () { feedbackCanDismiss = true; }, 400);
-    setTimeout(function () {
-      if (!feedbackCanDismiss) feedbackCanDismiss = true;
-    }, 800);
+
+    feedbackDismissTimer = setTimeout(function () {
+      feedbackCanDismiss = true;
+    }, FEEDBACK_TAP_EARLY_MS);
+
+    feedbackAutoDismissTimer = setTimeout(function () {
+      dismissFeedback(true);
+    }, autoDismissMs);
   }
 
-  function dismissFeedback() {
-    if (!feedbackCanDismiss) return;
+  function dismissFeedback(force) {
+    if (!force && !feedbackCanDismiss) return;
+    clearFeedbackTimers();
     feedbackCanDismiss = false;
     roundState.questionIndex++;
     showScreen('game');
@@ -892,8 +943,24 @@
     showScreen('summary');
   }
 
-  // --- Swipe handling ---
+  // --- Swipe / flag drag handling ---
   var swipeStart = null;
+  var isDragging = false;
+  var activePointerId = null;
+
+  function clampDrag(value) {
+    return Math.max(-FLAG_DRAG_MAX, Math.min(FLAG_DRAG_MAX, value));
+  }
+
+  function resetFlagPosition() {
+    gameFlag.style.transform = '';
+    gameFlag.classList.remove('dragging');
+    gameArea.classList.remove('is-dragging');
+  }
+
+  function updateFlagDrag(dx, dy) {
+    gameFlag.style.transform = 'translate(' + clampDrag(dx) + 'px, ' + clampDrag(dy) + 'px)';
+  }
 
   function getDirectionFromDelta(dx, dy) {
     if (Math.abs(dx) < SWIPE_THRESHOLD && Math.abs(dy) < SWIPE_THRESHOLD) return null;
@@ -906,52 +973,89 @@
     if (dir) dirEls[dir].classList.add('highlight');
   }
 
-  function onPointerStart(x, y) {
-    if (inputLocked) return;
-    swipeStart = { x: x, y: y };
+  function isFlagTarget(target) {
+    return target === gameFlag || gameFlag.contains(target);
   }
 
-  function onPointerMove(x, y) {
-    if (!swipeStart || inputLocked) return;
+  function onPointerStart(x, y, target, pointerId) {
+    if (inputLocked || !isFlagTarget(target)) return;
+    swipeStart = { x: x, y: y };
+    isDragging = true;
+    activePointerId = pointerId;
+    gameFlag.classList.add('dragging');
+    gameArea.classList.add('is-dragging');
+  }
+
+  function onPointerMove(x, y, pointerId) {
+    if (!isDragging || !swipeStart || inputLocked) return;
+    if (activePointerId !== null && pointerId !== undefined && pointerId !== activePointerId) return;
     var dx = x - swipeStart.x;
     var dy = y - swipeStart.y;
+    updateFlagDrag(dx, dy);
     highlightDirection(getDirectionFromDelta(dx, dy));
   }
 
-  function onPointerEnd(x, y) {
-    if (!swipeStart || inputLocked) return;
+  function onPointerEnd(x, y, pointerId) {
+    if (!isDragging || !swipeStart || inputLocked) return;
+    if (activePointerId !== null && pointerId !== undefined && pointerId !== activePointerId) return;
+
     var dx = x - swipeStart.x;
     var dy = y - swipeStart.y;
     var dir = getDirectionFromDelta(dx, dy);
+
     swipeStart = null;
+    isDragging = false;
+    activePointerId = null;
     highlightDirection(null);
+    resetFlagPosition();
+
     if (dir) handleAnswer(dir);
   }
 
-  gameArea.addEventListener('touchstart', function (e) {
-    if (e.touches.length === 1) onPointerStart(e.touches[0].clientX, e.touches[0].clientY);
+  function onPointerCancel() {
+    swipeStart = null;
+    isDragging = false;
+    activePointerId = null;
+    highlightDirection(null);
+    resetFlagPosition();
+  }
+
+  gameFlag.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1) {
+      onPointerStart(e.touches[0].clientX, e.touches[0].clientY, e.target, e.touches[0].identifier);
+    }
   }, { passive: true });
 
-  gameArea.addEventListener('touchmove', function (e) {
-    if (e.touches.length === 1) onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+  gameFlag.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 1) {
+      onPointerMove(e.touches[0].clientX, e.touches[0].clientY, e.touches[0].identifier);
+    }
   }, { passive: true });
 
-  gameArea.addEventListener('touchend', function (e) {
+  gameFlag.addEventListener('touchend', function (e) {
     if (e.changedTouches.length === 1) {
-      onPointerEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      var t = e.changedTouches[0];
+      onPointerEnd(t.clientX, t.clientY, t.identifier);
     }
   });
 
-  gameArea.addEventListener('mousedown', function (e) {
-    onPointerStart(e.clientX, e.clientY);
+  gameFlag.addEventListener('touchcancel', onPointerCancel);
+
+  gameFlag.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    onPointerStart(e.clientX, e.clientY, e.target, 'mouse');
   });
 
-  gameArea.addEventListener('mousemove', function (e) {
-    if (e.buttons === 1) onPointerMove(e.clientX, e.clientY);
+  document.addEventListener('mousemove', function (e) {
+    if (activePointerId === 'mouse' && e.buttons === 1) {
+      onPointerMove(e.clientX, e.clientY, 'mouse');
+    }
   });
 
-  gameArea.addEventListener('mouseup', function (e) {
-    onPointerEnd(e.clientX, e.clientY);
+  document.addEventListener('mouseup', function (e) {
+    if (activePointerId === 'mouse') {
+      onPointerEnd(e.clientX, e.clientY, 'mouse');
+    }
   });
 
   DIRECTIONS.forEach(function (dir) {
