@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Geo Quiz</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-hover: #243044;
+      --text: #e8eaed;
+      --text-muted: #9aa0a6;
+      --primary: #4fc3f7;
+      --primary-dark: #0288d1;
+      --correct: #2e7d32;
+      --wrong: #c62828;
+      --accent: #ffb74d;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      position: fixed;
+      inset: 0;
+    }
+
+    .screen.active { display: flex; }
+
+    /* Name screen */
+    #screen-name {
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(160deg, #0f1419 0%, #1a2a3a 100%);
+    }
+
+    .name-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .name-card h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--primary), #81d4fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .name-card p { color: var(--text-muted); margin-bottom: 24px; }
+
+    .name-card input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #2a3a4a;
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .name-card input:focus { border-color: var(--primary); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0f1419;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: #81d4fa; }
+
+    .btn-secondary {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .storage-warning {
+      color: var(--accent);
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .storage-warning.visible { display: block; }
+
+    /* Home screen */
+    #screen-home {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .home-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .home-header h1 { font-size: 1.8rem; margin-bottom: 4px; }
+    .home-header .player-name { color: var(--primary); font-size: 1.2rem; }
+    .change-name-link {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .mode-grid {
+      display: grid;
+      gap: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .mode-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      border: 2px solid transparent;
+    }
+
+    .mode-card:hover { background: var(--surface-hover); transform: translateY(-2px); }
+    .mode-card:active { transform: scale(0.98); }
+
+    .mode-card .mode-icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .mode-card h2 { font-size: 1.25rem; margin-bottom: 4px; }
+    .mode-card p { color: var(--text-muted); font-size: 0.9rem; }
+    .mode-card .mode-stats {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    /* Game screen */
+    #screen-game {
+      touch-action: none;
+      user-select: none;
+    }
+
+    .game-header {
+      padding: 12px 16px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .game-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .game-header .prompt {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      padding: 8px 0 0;
+    }
+
+    .score-display { color: var(--accent); font-weight: 600; }
+    .streak-display { color: #ff7043; }
+
+    .progress-bar {
+      height: 4px;
+      background: #2a3a4a;
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.3s;
+    }
+
+    .game-area {
+      flex: 1;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-areas:
+        ". up ."
+        "left flag right"
+        ". down .";
+      gap: 8px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .dir-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+      border: 2px solid transparent;
+      min-height: 56px;
+      word-break: break-word;
+    }
+
+    .dir-option:hover { background: var(--surface-hover); }
+    .dir-option.highlight {
+      border-color: var(--primary);
+      box-shadow: 0 0 16px rgba(79, 195, 247, 0.4);
+      transform: scale(1.05);
+    }
+
+    .dir-up    { grid-area: up; }
+    .dir-down  { grid-area: down; }
+    .dir-left  { grid-area: left; }
+    .dir-right { grid-area: right; }
+
+    .flag-center {
+      grid-area: flag;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(5rem, 20vw, 8rem);
+      line-height: 1;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+    }
+
+    .swipe-hint {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 8px;
+      flex-shrink: 0;
+    }
+
+    .swipe-hint.hidden { display: none; }
+
+    /* Feedback overlay */
+    #screen-feedback {
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    #screen-feedback.correct { background: var(--correct); }
+    #screen-feedback.wrong { background: var(--wrong); }
+
+    #screen-feedback h2 {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    #screen-feedback .feedback-detail {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      opacity: 0.95;
+    }
+
+    #screen-feedback .feedback-continue {
+      margin-top: 32px;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    /* Round summary */
+    #screen-summary {
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(160deg, #0f1419 0%, #1a2a3a 100%);
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .stat-box .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-box .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .summary-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Name entry -->
+  <section id="screen-name" class="screen active">
+    <div class="name-card">
+      <h1>Geo Quiz</h1>
+      <p>Test your knowledge of flags, capitals, and languages!</p>
+      <input type="text" id="name-input" placeholder="Enter your name" maxlength="30" autocomplete="name">
+      <button class="btn btn-primary" id="name-submit" disabled>Start Playing</button>
+      <p class="storage-warning" id="storage-warning">Progress cannot be saved (localStorage unavailable).</p>
+    </div>
+  </section>
+
+  <!-- Home -->
+  <section id="screen-home" class="screen">
+    <div class="home-header">
+      <h1>Geo Quiz</h1>
+      <p class="player-name">Welcome, <span id="home-player-name"></span>!</p>
+      <span class="change-name-link" id="change-name">Change name</span>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card" data-mode="flags">
+        <div class="mode-icon">🏳️</div>
+        <h2>Flags</h2>
+        <p>Identify countries by their flag</p>
+        <div class="mode-stats" id="stats-flags"></div>
+      </div>
+      <div class="mode-card" data-mode="capitals">
+        <div class="mode-icon">🏛️</div>
+        <h2>Capitals</h2>
+        <p>Match flags to capital cities</p>
+        <div class="mode-stats" id="stats-capitals"></div>
+      </div>
+      <div class="mode-card" data-mode="words">
+        <div class="mode-icon">💬</div>
+        <h2>Words</h2>
+        <p>Learn basic words in each language</p>
+        <div class="mode-stats" id="stats-words"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Game -->
+  <section id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="game-header-row">
+        <span id="game-mode-label"></span>
+        <span>Round <span id="game-round"></span> · Q<span id="game-question-num"></span>/10</span>
+      </div>
+      <div class="game-header-row">
+        <span class="score-display">Score: <span id="game-round-score">0</span></span>
+        <span class="streak-display">🔥 <span id="game-streak">0</span></span>
+      </div>
+      <p class="prompt" id="game-prompt"></p>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="game-area" id="game-area">
+      <div class="dir-option dir-up"    data-dir="up"    id="opt-up"></div>
+      <div class="dir-option dir-left"  data-dir="left"  id="opt-left"></div>
+      <div class="flag-center" id="game-flag"></div>
+      <div class="dir-option dir-right" data-dir="right" id="opt-right"></div>
+      <div class="dir-option dir-down"  data-dir="down"  id="opt-down"></div>
+    </div>
+    <p class="swipe-hint" id="swipe-hint">Swipe toward your answer ↑ ↓ ← →</p>
+  </section>
+
+  <!-- Feedback -->
+  <section id="screen-feedback" class="screen">
+    <h2 id="feedback-title"></h2>
+    <div class="feedback-detail" id="feedback-detail"></div>
+    <p class="feedback-continue">Tap to continue</p>
+  </section>
+
+  <!-- Round summary -->
+  <section id="screen-summary" class="screen">
+    <div class="summary-card">
+      <h2>Round Complete!</h2>
+      <p id="summary-mode-label"></p>
+      <div class="summary-stats">
+        <div class="stat-box">
+          <div class="stat-value" id="summary-score">0</div>
+          <div class="stat-label">Round Score</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="summary-accuracy">0%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="summary-best-streak">0</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="summary-total">0</div>
+          <div class="stat-label">Total Score</div>
+        </div>
+      </div>
+      <div class="summary-actions">
+        <button class="btn btn-primary" id="btn-next-round">Next Round</button>
+        <button class="btn btn-secondary" id="btn-go-home">Back to Home</button>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'geoQuizPlayer';
+  const QUESTIONS_PER_ROUND = 10;
+  const SWIPE_THRESHOLD = 40;
+  const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
+  const WORD_LABELS = {
+    hello: 'Hello',
+    thankYou: 'Thank you',
+    yes: 'Yes',
+    no: 'No',
+    goodbye: 'Goodbye'
+  };
+  const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
+  const DIRECTIONS = ['up', 'down', 'left', 'right'];
+
+  const COUNTRIES = [
+    { code: 'US', name: 'United States', capital: 'Washington, D.C.', difficulty: 1, words: { hello: 'Hello', thankYou: 'Thank you', yes: 'Yes', no: 'No', goodbye: 'Goodbye' } },
+    { code: 'GB', name: 'United Kingdom', capital: 'London', difficulty: 1, words: { hello: 'Hello', thankYou: 'Thank you', yes: 'Yes', no: 'No', goodbye: 'Goodbye' } },
+    { code: 'FR', name: 'France', capital: 'Paris', difficulty: 1, words: { hello: 'Bonjour', thankYou: 'Merci', yes: 'Oui', no: 'Non', goodbye: 'Au revoir' } },
+    { code: 'DE', name: 'Germany', capital: 'Berlin', difficulty: 1, words: { hello: 'Hallo', thankYou: 'Danke', yes: 'Ja', no: 'Nein', goodbye: 'Auf Wiedersehen' } },
+    { code: 'IT', name: 'Italy', capital: 'Rome', difficulty: 1, words: { hello: 'Ciao', thankYou: 'Grazie', yes: 'Sì', no: 'No', goodbye: 'Arrivederci' } },
+    { code: 'ES', name: 'Spain', capital: 'Madrid', difficulty: 1, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Adiós' } },
+    { code: 'JP', name: 'Japan', capital: 'Tokyo', difficulty: 1, words: { hello: 'Konnichiwa', thankYou: 'Arigatou', yes: 'Hai', no: 'Iie', goodbye: 'Sayonara' } },
+    { code: 'CN', name: 'China', capital: 'Beijing', difficulty: 1, words: { hello: 'Nǐ hǎo', thankYou: 'Xièxiè', yes: 'Shì', no: 'Bù', goodbye: 'Zàijiàn' } },
+    { code: 'BR', name: 'Brazil', capital: 'Brasília', difficulty: 1, words: { hello: 'Olá', thankYou: 'Obrigado', yes: 'Sim', no: 'Não', goodbye: 'Tchau' } },
+    { code: 'CA', name: 'Canada', capital: 'Ottawa', difficulty: 1, words: { hello: 'Hello', thankYou: 'Thank you', yes: 'Yes', no: 'No', goodbye: 'Goodbye' } },
+    { code: 'AU', name: 'Australia', capital: 'Canberra', difficulty: 1, words: { hello: 'G\'day', thankYou: 'Thanks', yes: 'Yeah', no: 'Nah', goodbye: 'See ya' } },
+    { code: 'MX', name: 'Mexico', capital: 'Mexico City', difficulty: 1, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Adiós' } },
+    { code: 'IN', name: 'India', capital: 'New Delhi', difficulty: 1, words: { hello: 'Namaste', thankYou: 'Dhanyavaad', yes: 'Haan', no: 'Nahin', goodbye: 'Alvida' } },
+    { code: 'RU', name: 'Russia', capital: 'Moscow', difficulty: 1, words: { hello: 'Privet', thankYou: 'Spasibo', yes: 'Da', no: 'Net', goodbye: 'Do svidaniya' } },
+    { code: 'KR', name: 'South Korea', capital: 'Seoul', difficulty: 2, words: { hello: 'Annyeonghaseyo', thankYou: 'Gamsahamnida', yes: 'Ne', no: 'Aniyo', goodbye: 'Annyeonghi gaseyo' } },
+    { code: 'PL', name: 'Poland', capital: 'Warsaw', difficulty: 2, words: { hello: 'Cześć', thankYou: 'Dziękuję', yes: 'Tak', no: 'Nie', goodbye: 'Do widzenia' } },
+    { code: 'TH', name: 'Thailand', capital: 'Bangkok', difficulty: 2, words: { hello: 'Sawatdee', thankYou: 'Khob khun', yes: 'Chai', no: 'Mai chai', goodbye: 'La gorn' } },
+    { code: 'AR', name: 'Argentina', capital: 'Buenos Aires', difficulty: 2, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Chau' } },
+    { code: 'EG', name: 'Egypt', capital: 'Cairo', difficulty: 2, words: { hello: 'Marhaba', thankYou: 'Shukran', yes: 'Na\'am', no: 'La', goodbye: 'Ma\'a salama' } },
+    { code: 'TR', name: 'Turkey', capital: 'Ankara', difficulty: 2, words: { hello: 'Merhaba', thankYou: 'Teşekkürler', yes: 'Evet', no: 'Hayır', goodbye: 'Hoşça kal' } },
+    { code: 'NL', name: 'Netherlands', capital: 'Amsterdam', difficulty: 2, words: { hello: 'Hallo', thankYou: 'Dank je', yes: 'Ja', no: 'Nee', goodbye: 'Tot ziens' } },
+    { code: 'SE', name: 'Sweden', capital: 'Stockholm', difficulty: 2, words: { hello: 'Hej', thankYou: 'Tack', yes: 'Ja', no: 'Nej', goodbye: 'Hej då' } },
+    { code: 'NO', name: 'Norway', capital: 'Oslo', difficulty: 2, words: { hello: 'Hei', thankYou: 'Takk', yes: 'Ja', no: 'Nei', goodbye: 'Ha det' } },
+    { code: 'GR', name: 'Greece', capital: 'Athens', difficulty: 2, words: { hello: 'Yassou', thankYou: 'Efharistó', yes: 'Nai', no: 'Ochi', goodbye: 'Antío' } },
+    { code: 'PT', name: 'Portugal', capital: 'Lisbon', difficulty: 2, words: { hello: 'Olá', thankYou: 'Obrigado', yes: 'Sim', no: 'Não', goodbye: 'Adeus' } },
+    { code: 'IE', name: 'Ireland', capital: 'Dublin', difficulty: 2, words: { hello: 'Dia dhuit', thankYou: 'Go raibh maith agat', yes: 'Tá', no: 'Níl', goodbye: 'Slán' } },
+    { code: 'SK', name: 'Slovakia', capital: 'Bratislava', difficulty: 3, words: { hello: 'Ahoj', thankYou: 'Ďakujem', yes: 'Áno', no: 'Nie', goodbye: 'Dovidenia' } },
+    { code: 'GH', name: 'Ghana', capital: 'Accra', difficulty: 3, words: { hello: 'Akwaaba', thankYou: 'Medaase', yes: 'Aane', no: 'Daabi', goodbye: 'Nante yie' } },
+    { code: 'UY', name: 'Uruguay', capital: 'Montevideo', difficulty: 3, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Chau' } },
+    { code: 'RO', name: 'Romania', capital: 'Bucharest', difficulty: 3, words: { hello: 'Bună', thankYou: 'Mulțumesc', yes: 'Da', no: 'Nu', goodbye: 'La revedere' } },
+    { code: 'HU', name: 'Hungary', capital: 'Budapest', difficulty: 3, words: { hello: 'Szia', thankYou: 'Köszönöm', yes: 'Igen', no: 'Nem', goodbye: 'Viszlát' } },
+    { code: 'CZ', name: 'Czech Republic', capital: 'Prague', difficulty: 3, words: { hello: 'Ahoj', thankYou: 'Děkuji', yes: 'Ano', no: 'Ne', goodbye: 'Na shledanou' } },
+    { code: 'FI', name: 'Finland', capital: 'Helsinki', difficulty: 3, words: { hello: 'Hei', thankYou: 'Kiitos', yes: 'Kyllä', no: 'Ei', goodbye: 'Näkemiin' } },
+    { code: 'MY', name: 'Malaysia', capital: 'Kuala Lumpur', difficulty: 3, words: { hello: 'Selamat pagi', thankYou: 'Terima kasih', yes: 'Ya', no: 'Tidak', goodbye: 'Selamat tinggal' } },
+    { code: 'PH', name: 'Philippines', capital: 'Manila', difficulty: 3, words: { hello: 'Kumusta', thankYou: 'Salamat', yes: 'Oo', no: 'Hindi', goodbye: 'Paalam' } },
+    { code: 'KE', name: 'Kenya', capital: 'Nairobi', difficulty: 3, words: { hello: 'Jambo', thankYou: 'Asante', yes: 'Ndiyo', no: 'Hapana', goodbye: 'Kwaheri' } },
+    { code: 'VN', name: 'Vietnam', capital: 'Hanoi', difficulty: 3, words: { hello: 'Xin chào', thankYou: 'Cảm ơn', yes: 'Vâng', no: 'Không', goodbye: 'Tạm biệt' } },
+    { code: 'UA', name: 'Ukraine', capital: 'Kyiv', difficulty: 3, words: { hello: 'Pryvit', thankYou: 'Dyakuyu', yes: 'Tak', no: 'Ni', goodbye: 'Do pobachennya' } },
+    { code: 'BT', name: 'Bhutan', capital: 'Thimphu', difficulty: 4, words: { hello: 'Kuzuzangpo', thankYou: 'Kadrin chhe', yes: 'In', no: 'Men', goodbye: 'Log jay ge' } },
+    { code: 'LS', name: 'Lesotho', capital: 'Maseru', difficulty: 4, words: { hello: 'Lumela', thankYou: 'Ke a leboha', yes: 'Ee', no: 'Tjhe', goodbye: 'Sala hantle' } },
+    { code: 'MN', name: 'Mongolia', capital: 'Ulaanbaatar', difficulty: 4, words: { hello: 'Sain baina uu', thankYou: 'Bayarlalaa', yes: 'Tiim', no: 'Ugui', goodbye: 'Bayartai' } },
+    { code: 'LA', name: 'Laos', capital: 'Vientiane', difficulty: 4, words: { hello: 'Sabaidee', thankYou: 'Khob chai', yes: 'Doi', no: 'Bo', goodbye: 'La gon' } },
+    { code: 'NP', name: 'Nepal', capital: 'Kathmandu', difficulty: 4, words: { hello: 'Namaste', thankYou: 'Dhanyabaad', yes: 'Ho', no: 'Hoina', goodbye: 'Namaste' } },
+    { code: 'LK', name: 'Sri Lanka', capital: 'Sri Jayawardenepura Kotte', difficulty: 4, words: { hello: 'Ayubowan', thankYou: 'Istuti', yes: 'Ow', no: 'Naha', goodbye: 'Gihin ennam' } },
+    { code: 'EE', name: 'Estonia', capital: 'Tallinn', difficulty: 4, words: { hello: 'Tere', thankYou: 'Aitäh', yes: 'Jah', no: 'Ei', goodbye: 'Head aega' } },
+    { code: 'LV', name: 'Latvia', capital: 'Riga', difficulty: 4, words: { hello: 'Sveiki', thankYou: 'Paldies', yes: 'Jā', no: 'Nē', goodbye: 'Uz redzēšanos' } },
+    { code: 'IS', name: 'Iceland', capital: 'Reykjavik', difficulty: 4, words: { hello: 'Halló', thankYou: 'Takk', yes: 'Já', no: 'Nei', goodbye: 'Bless' } },
+    { code: 'MT', name: 'Malta', capital: 'Valletta', difficulty: 4, words: { hello: 'Bonġu', thankYou: 'Grazzi', yes: 'Iva', no: 'Le', goodbye: 'Saħħa' } },
+    { code: 'MC', name: 'Monaco', capital: 'Monaco', difficulty: 5, words: { hello: 'Bonjour', thankYou: 'Merci', yes: 'Oui', no: 'Non', goodbye: 'Au revoir' } },
+    { code: 'AD', name: 'Andorra', capital: 'Andorra la Vella', difficulty: 5, words: { hello: 'Hola', thankYou: 'Gràcies', yes: 'Sí', no: 'No', goodbye: 'Adéu' } },
+    { code: 'LI', name: 'Liechtenstein', capital: 'Vaduz', difficulty: 5, words: { hello: 'Hallo', thankYou: 'Danke', yes: 'Ja', no: 'Nein', goodbye: 'Auf Wiedersehen' } },
+    { code: 'LU', name: 'Luxembourg', capital: 'Luxembourg City', difficulty: 5, words: { hello: 'Moien', thankYou: 'Merci', yes: 'Jo', no: 'Nee', goodbye: 'Äddi' } },
+    { code: 'SM', name: 'San Marino', capital: 'San Marino', difficulty: 5, words: { hello: 'Ciao', thankYou: 'Grazie', yes: 'Sì', no: 'No', goodbye: 'Arrivederci' } },
+    { code: 'VA', name: 'Vatican City', capital: 'Vatican City', difficulty: 5, words: { hello: 'Salve', thankYou: 'Gratias', yes: 'Ita', no: 'Non', goodbye: 'Vale' } },
+    { code: 'SG', name: 'Singapore', capital: 'Singapore', difficulty: 5, words: { hello: 'Hello', thankYou: 'Thank you', yes: 'Yes', no: 'No', goodbye: 'Goodbye' } },
+    { code: 'ID', name: 'Indonesia', capital: 'Jakarta', difficulty: 5, words: { hello: 'Halo', thankYou: 'Terima kasih', yes: 'Ya', no: 'Tidak', goodbye: 'Selamat tinggal' } },
+    { code: 'NZ', name: 'New Zealand', capital: 'Wellington', difficulty: 5, words: { hello: 'Kia ora', thankYou: 'Thank you', yes: 'Ae', no: 'Kāo', goodbye: 'Haere rā' } },
+    { code: 'CL', name: 'Chile', capital: 'Santiago', difficulty: 5, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Chao' } },
+    { code: 'CO', name: 'Colombia', capital: 'Bogotá', difficulty: 5, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Chao' } },
+    { code: 'PE', name: 'Peru', capital: 'Lima', difficulty: 5, words: { hello: 'Hola', thankYou: 'Gracias', yes: 'Sí', no: 'No', goodbye: 'Chau' } },
+    { code: 'ZA', name: 'South Africa', capital: 'Pretoria', difficulty: 5, words: { hello: 'Hello', thankYou: 'Enkosi', yes: 'Ewe', no: 'Hayi', goodbye: 'Hamba kahle' } },
+    { code: 'NG', name: 'Nigeria', capital: 'Abuja', difficulty: 5, words: { hello: 'Sannu', thankYou: 'Na gode', yes: 'Ee', no: 'A\'a', goodbye: 'Sai an jima' } },
+    { code: 'IL', name: 'Israel', capital: 'Jerusalem', difficulty: 5, words: { hello: 'Shalom', thankYou: 'Toda', yes: 'Ken', no: 'Lo', goodbye: 'Lehitra\'ot' } },
+    { code: 'SA', name: 'Saudi Arabia', capital: 'Riyadh', difficulty: 5, words: { hello: 'Marhaba', thankYou: 'Shukran', yes: 'Na\'am', no: 'La', goodbye: 'Ma\'a salama' } },
+    { code: 'AE', name: 'United Arab Emirates', capital: 'Abu Dhabi', difficulty: 5, words: { hello: 'Marhaba', thankYou: 'Shukran', yes: 'Na\'am', no: 'La', goodbye: 'Ma\'a salama' } },
+    { code: 'CH', name: 'Switzerland', capital: 'Bern', difficulty: 5, words: { hello: 'Grüezi', thankYou: 'Danke', yes: 'Ja', no: 'Nein', goodbye: 'Uf Wiederluege' } },
+    { code: 'AT', name: 'Austria', capital: 'Vienna', difficulty: 5, words: { hello: 'Servus', thankYou: 'Danke', yes: 'Ja', no: 'Nein', goodbye: 'Auf Wiedersehen' } },
+    { code: 'BE', name: 'Belgium', capital: 'Brussels', difficulty: 5, words: { hello: 'Bonjour', thankYou: 'Merci', yes: 'Oui', no: 'Non', goodbye: 'Au revoir' } },
+    { code: 'DK', name: 'Denmark', capital: 'Copenhagen', difficulty: 5, words: { hello: 'Hej', thankYou: 'Tak', yes: 'Ja', no: 'Nej', goodbye: 'Farvel' } }
+  ];
+
+  // --- Utilities ---
+  function flagEmoji(code) {
+    return code.toUpperCase().replace(/./g, function (c) {
+      return String.fromCodePoint(127397 + c.charCodeAt(0));
+    });
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function defaultModeStats() {
+    return { round: 1, totalScore: 0, bestRoundScore: 0, questionsAnswered: 0, correctCount: 0 };
+  }
+
+  function defaultPlayer() {
+    return {
+      name: '',
+      createdAt: new Date().toISOString(),
+      modes: { flags: defaultModeStats(), capitals: defaultModeStats(), words: defaultModeStats() }
+    };
+  }
+
+  // --- Storage ---
+  var storageAvailable = true;
+
+  function checkStorage() {
+    try {
+      localStorage.setItem('__test', '1');
+      localStorage.removeItem('__test');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function loadPlayer() {
+    if (!storageAvailable) return defaultPlayer();
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultPlayer();
+      var data = JSON.parse(raw);
+      if (!data.modes) data.modes = defaultPlayer().modes;
+      ['flags', 'capitals', 'words'].forEach(function (m) {
+        if (!data.modes[m]) data.modes[m] = defaultModeStats();
+      });
+      return data;
+    } catch (e) {
+      return defaultPlayer();
+    }
+  }
+
+  function savePlayer() {
+    if (!storageAvailable) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
+    } catch (e) { /* ignore */ }
+  }
+
+  // --- DOM refs ---
+  var screens = {
+    name: document.getElementById('screen-name'),
+    home: document.getElementById('screen-home'),
+    game: document.getElementById('screen-game'),
+    feedback: document.getElementById('screen-feedback'),
+    summary: document.getElementById('screen-summary')
+  };
+
+  var nameInput = document.getElementById('name-input');
+  var nameSubmit = document.getElementById('name-submit');
+  var storageWarning = document.getElementById('storage-warning');
+  var homePlayerName = document.getElementById('home-player-name');
+  var changeNameBtn = document.getElementById('change-name');
+  var gameArea = document.getElementById('game-area');
+  var swipeHint = document.getElementById('swipe-hint');
+  var feedbackScreen = document.getElementById('screen-feedback');
+  var feedbackTitle = document.getElementById('feedback-title');
+  var feedbackDetail = document.getElementById('feedback-detail');
+  var btnNextRound = document.getElementById('btn-next-round');
+  var btnGoHome = document.getElementById('btn-go-home');
+
+  var dirEls = {
+    up: document.getElementById('opt-up'),
+    down: document.getElementById('opt-down'),
+    left: document.getElementById('opt-left'),
+    right: document.getElementById('opt-right')
+  };
+
+  // --- State ---
+  var player = defaultPlayer();
+  var currentMode = null;
+  var roundState = null;
+  var inputLocked = false;
+  var feedbackCanDismiss = false;
+  var feedbackDismissTimer = null;
+
+  function showScreen(name) {
+    Object.keys(screens).forEach(function (k) {
+      screens[k].classList.toggle('active', k === name);
+    });
+  }
+
+  function updateHomeStats() {
+    homePlayerName.textContent = player.name;
+    ['flags', 'capitals', 'words'].forEach(function (mode) {
+      var s = player.modes[mode];
+      document.getElementById('stats-' + mode).textContent =
+        'Round ' + s.round + ' · Best: ' + s.bestRoundScore + ' · Total: ' + s.totalScore;
+    });
+  }
+
+  // --- Question generation ---
+  function pickCountryForRound(round) {
+    var targetTier = Math.min(round, 5);
+    var tierMinus = Math.max(1, targetTier - 1);
+    var tierPlus = Math.min(5, targetTier + 1);
+    var roll = Math.random();
+    var tier;
+    if (roll < 0.6) tier = targetTier;
+    else if (roll < 0.85) tier = tierMinus;
+    else tier = tierPlus;
+
+    var pool = COUNTRIES.filter(function (c) { return c.difficulty === tier; });
+    if (pool.length === 0) pool = COUNTRIES;
+    return pickRandom(pool);
+  }
+
+  function getAnswerText(country, mode, wordKey) {
+    if (mode === 'flags') return country.name;
+    if (mode === 'capitals') return country.capital;
+    return country.words[wordKey];
+  }
+
+  function getDistractors(correctCountry, mode, wordKey, count) {
+    var correctText = getAnswerText(correctCountry, mode, wordKey);
+    var sameTier = COUNTRIES.filter(function (c) {
+      return c.code !== correctCountry.code && c.difficulty === correctCountry.difficulty;
+    });
+    var others = COUNTRIES.filter(function (c) { return c.code !== correctCountry.code; });
+    var pool = sameTier.length >= count ? sameTier : others;
+    var candidates = pool.map(function (c) {
+      return getAnswerText(c, mode, wordKey);
+    }).filter(function (t) { return t !== correctText; });
+
+    candidates = shuffle(Array.from(new Set(candidates)));
+    while (candidates.length < count) {
+      var extra = pickRandom(others);
+      if (extra.code !== correctCountry.code) {
+        var t = getAnswerText(extra, mode, wordKey);
+        if (t !== correctText && candidates.indexOf(t) === -1) candidates.push(t);
+      }
+    }
+    return candidates.slice(0, count);
+  }
+
+  function buildQuestion(mode, round, usedCodes) {
+    var country;
+    var attempts = 0;
+    do {
+      country = pickCountryForRound(round);
+      attempts++;
+    } while (usedCodes.indexOf(country.code) !== -1 && attempts < 50);
+
+    var wordKey = pickRandom(WORD_KEYS);
+    var correct = getAnswerText(country, mode, wordKey);
+    var distractors = getDistractors(country, mode, wordKey, 3);
+    var options = shuffle([correct].concat(distractors));
+    var dirOrder = shuffle(DIRECTIONS.slice());
+    var mapping = {};
+    for (var i = 0; i < 4; i++) {
+      mapping[dirOrder[i]] = options[i];
+    }
+
+    return {
+      country: country,
+      wordKey: wordKey,
+      correct: correct,
+      mapping: mapping,
+      correctDir: dirOrder[options.indexOf(correct)]
+    };
+  }
+
+  function startRound(mode) {
+    currentMode = mode;
+    var modeStats = player.modes[mode];
+    roundState = {
+      round: modeStats.round,
+      questionIndex: 0,
+      roundScore: 0,
+      streak: 0,
+      bestStreak: 0,
+      correctInRound: 0,
+      usedCodes: [],
+      currentQuestion: null,
+      questionStartTime: 0
+    };
+    showScreen('game');
+    document.getElementById('game-mode-label').textContent = MODE_LABELS[mode];
+    swipeHint.classList.toggle('hidden', modeStats.round > 1);
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    if (roundState.questionIndex >= QUESTIONS_PER_ROUND) {
+      endRound();
+      return;
+    }
+
+    roundState.currentQuestion = buildQuestion(currentMode, roundState.round, roundState.usedCodes);
+    roundState.usedCodes.push(roundState.currentQuestion.country.code);
+    roundState.questionStartTime = Date.now();
+    inputLocked = false;
+
+    var q = roundState.currentQuestion;
+    document.getElementById('game-round').textContent = roundState.round;
+    document.getElementById('game-question-num').textContent = roundState.questionIndex + 1;
+    document.getElementById('game-round-score').textContent = roundState.roundScore;
+    document.getElementById('game-streak').textContent = roundState.streak;
+    document.getElementById('progress-fill').style.width = ((roundState.questionIndex / QUESTIONS_PER_ROUND) * 100) + '%';
+    document.getElementById('game-flag').textContent = flagEmoji(q.country.code);
+
+    var promptText;
+    if (currentMode === 'flags') promptText = 'Which country is this?';
+    else if (currentMode === 'capitals') promptText = 'What is the capital?';
+    else promptText = 'How do you say "' + WORD_LABELS[q.wordKey] + '" in ' + q.country.name + '?';
+    document.getElementById('game-prompt').textContent = promptText;
+
+    DIRECTIONS.forEach(function (dir) {
+      dirEls[dir].textContent = q.mapping[dir];
+      dirEls[dir].classList.remove('highlight');
+    });
+  }
+
+  function scoreAnswer(isCorrect, elapsedMs) {
+    if (!isCorrect) {
+      roundState.streak = 0;
+      return 0;
+    }
+    roundState.streak++;
+    if (roundState.streak > roundState.bestStreak) roundState.bestStreak = roundState.streak;
+
+    var base = 100;
+    var speedBonus = Math.max(0, Math.round(50 * (1 - elapsedMs / 3000)));
+    var streakBonus = 25 * roundState.streak;
+    return base + speedBonus + streakBonus;
+  }
+
+  function handleAnswer(dir) {
+    if (inputLocked) return;
+    inputLocked = true;
+
+    var q = roundState.currentQuestion;
+    var chosen = q.mapping[dir];
+    var isCorrect = dir === q.correctDir;
+    var elapsed = Date.now() - roundState.questionStartTime;
+    var points = scoreAnswer(isCorrect, elapsed);
+
+    roundState.roundScore += points;
+    if (isCorrect) roundState.correctInRound++;
+
+    var modeStats = player.modes[currentMode];
+    modeStats.questionsAnswered++;
+    if (isCorrect) modeStats.correctCount++;
+    savePlayer();
+
+    showFeedback(isCorrect, chosen, q.correct, points);
+  }
+
+  function showFeedback(isCorrect, chosen, correct, points) {
+    feedbackScreen.className = 'screen active ' + (isCorrect ? 'correct' : 'wrong');
+    feedbackTitle.textContent = isCorrect ? 'Correct!' : 'Wrong';
+    if (isCorrect) {
+      feedbackDetail.innerHTML = '<p>' + correct + '</p><p>+' + points + ' points</p>';
+    } else {
+      feedbackDetail.innerHTML =
+        '<p>You chose: <strong>' + chosen + '</strong></p>' +
+        '<p>Correct answer: <strong>' + correct + '</strong></p>';
+    }
+
+    feedbackCanDismiss = false;
+    if (feedbackDismissTimer) clearTimeout(feedbackDismissTimer);
+    feedbackDismissTimer = setTimeout(function () { feedbackCanDismiss = true; }, 400);
+    setTimeout(function () {
+      if (!feedbackCanDismiss) feedbackCanDismiss = true;
+    }, 800);
+  }
+
+  function dismissFeedback() {
+    if (!feedbackCanDismiss) return;
+    feedbackCanDismiss = false;
+    roundState.questionIndex++;
+    showScreen('game');
+    nextQuestion();
+  }
+
+  function endRound() {
+    var modeStats = player.modes[currentMode];
+    modeStats.totalScore += roundState.roundScore;
+    if (roundState.roundScore > modeStats.bestRoundScore) {
+      modeStats.bestRoundScore = roundState.roundScore;
+    }
+    modeStats.round++;
+    savePlayer();
+
+    var accuracy = Math.round((roundState.correctInRound / QUESTIONS_PER_ROUND) * 100);
+    document.getElementById('summary-mode-label').textContent = MODE_LABELS[currentMode] + ' · Round ' + roundState.round;
+    document.getElementById('summary-score').textContent = roundState.roundScore;
+    document.getElementById('summary-accuracy').textContent = accuracy + '%';
+    document.getElementById('summary-best-streak').textContent = roundState.bestStreak;
+    document.getElementById('summary-total').textContent = modeStats.totalScore;
+    showScreen('summary');
+  }
+
+  // --- Swipe handling ---
+  var swipeStart = null;
+
+  function getDirectionFromDelta(dx, dy) {
+    if (Math.abs(dx) < SWIPE_THRESHOLD && Math.abs(dy) < SWIPE_THRESHOLD) return null;
+    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+    return dy > 0 ? 'down' : 'up';
+  }
+
+  function highlightDirection(dir) {
+    DIRECTIONS.forEach(function (d) { dirEls[d].classList.remove('highlight'); });
+    if (dir) dirEls[dir].classList.add('highlight');
+  }
+
+  function onPointerStart(x, y) {
+    if (inputLocked) return;
+    swipeStart = { x: x, y: y };
+  }
+
+  function onPointerMove(x, y) {
+    if (!swipeStart || inputLocked) return;
+    var dx = x - swipeStart.x;
+    var dy = y - swipeStart.y;
+    highlightDirection(getDirectionFromDelta(dx, dy));
+  }
+
+  function onPointerEnd(x, y) {
+    if (!swipeStart || inputLocked) return;
+    var dx = x - swipeStart.x;
+    var dy = y - swipeStart.y;
+    var dir = getDirectionFromDelta(dx, dy);
+    swipeStart = null;
+    highlightDirection(null);
+    if (dir) handleAnswer(dir);
+  }
+
+  gameArea.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1) onPointerStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  gameArea.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 1) onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  gameArea.addEventListener('touchend', function (e) {
+    if (e.changedTouches.length === 1) {
+      onPointerEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }
+  });
+
+  gameArea.addEventListener('mousedown', function (e) {
+    onPointerStart(e.clientX, e.clientY);
+  });
+
+  gameArea.addEventListener('mousemove', function (e) {
+    if (e.buttons === 1) onPointerMove(e.clientX, e.clientY);
+  });
+
+  gameArea.addEventListener('mouseup', function (e) {
+    onPointerEnd(e.clientX, e.clientY);
+  });
+
+  DIRECTIONS.forEach(function (dir) {
+    dirEls[dir].addEventListener('click', function () {
+      handleAnswer(dir);
+    });
+  });
+
+  feedbackScreen.addEventListener('click', dismissFeedback);
+  feedbackScreen.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    dismissFeedback();
+  });
+
+  // --- Name screen ---
+  nameInput.addEventListener('input', function () {
+    nameSubmit.disabled = nameInput.value.trim().length === 0;
+  });
+
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !nameSubmit.disabled) submitName();
+  });
+
+  function submitName() {
+    var name = nameInput.value.trim();
+    if (!name) return;
+    player.name = name;
+    if (!player.createdAt) player.createdAt = new Date().toISOString();
+    savePlayer();
+    updateHomeStats();
+    showScreen('home');
+  }
+
+  nameSubmit.addEventListener('click', submitName);
+
+  changeNameBtn.addEventListener('click', function () {
+    nameInput.value = player.name;
+    nameSubmit.disabled = player.name.length === 0;
+    showScreen('name');
+  });
+
+  // --- Home mode cards ---
+  document.querySelectorAll('.mode-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      startRound(card.getAttribute('data-mode'));
+    });
+  });
+
+  btnNextRound.addEventListener('click', function () {
+    startRound(currentMode);
+  });
+
+  btnGoHome.addEventListener('click', function () {
+    updateHomeStats();
+    showScreen('home');
+  });
+
+  // --- Init ---
+  storageAvailable = checkStorage();
+  if (!storageAvailable) storageWarning.classList.add('visible');
+
+  player = loadPlayer();
+  if (player.name) {
+    updateHomeStats();
+    showScreen('home');
+  } else {
+    showScreen('name');
+  }
+})();
+</script>
+</body>
+</html>
