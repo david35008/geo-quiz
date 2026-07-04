@@ -512,7 +512,6 @@
   const FLAG_DRAG_MAX = 72;
   const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
   const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
-  const FEEDBACK_TAP_EARLY_MS = 400;
   const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
   const WORD_LABELS = {
     hello: 'Hello',
@@ -701,8 +700,7 @@
   var currentMode = null;
   var roundState = null;
   var inputLocked = false;
-  var feedbackCanDismiss = false;
-  var feedbackDismissTimer = null;
+  var feedbackActive = false;
   var feedbackAutoDismissTimer = null;
 
   function showScreen(name) {
@@ -879,10 +877,6 @@
   }
 
   function clearFeedbackTimers() {
-    if (feedbackDismissTimer) {
-      clearTimeout(feedbackDismissTimer);
-      feedbackDismissTimer = null;
-    }
     if (feedbackAutoDismissTimer) {
       clearTimeout(feedbackAutoDismissTimer);
       feedbackAutoDismissTimer = null;
@@ -901,27 +895,21 @@
     }
 
     var autoDismissMs = isCorrect ? FEEDBACK_AUTO_DISMISS_CORRECT_MS : FEEDBACK_AUTO_DISMISS_WRONG_MS;
-    feedbackContinue.textContent = isCorrect ? '' : 'Tap to skip';
+    feedbackContinue.textContent = isCorrect ? '' : 'Tap to continue';
     feedbackTimer.textContent = isCorrect ? '' : 'Next question in ' + (autoDismissMs / 1000).toFixed(1) + 's';
 
     clearFeedbackTimers();
-    feedbackCanDismiss = isCorrect;
-
-    if (!isCorrect) {
-      feedbackDismissTimer = setTimeout(function () {
-        feedbackCanDismiss = true;
-      }, FEEDBACK_TAP_EARLY_MS);
-    }
+    feedbackActive = true;
 
     feedbackAutoDismissTimer = setTimeout(function () {
-      dismissFeedback(true);
+      dismissFeedback();
     }, autoDismissMs);
   }
 
-  function dismissFeedback(force) {
-    if (!force && !feedbackCanDismiss) return;
+  function dismissFeedback() {
+    if (!feedbackActive) return;
+    feedbackActive = false;
     clearFeedbackTimers();
-    feedbackCanDismiss = false;
     roundState.questionIndex++;
     showScreen('game');
     nextQuestion();
