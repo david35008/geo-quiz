@@ -183,7 +183,6 @@
 
     /* Game screen */
     #screen-game {
-      touch-action: none;
       user-select: none;
       position: relative;
     }
@@ -209,6 +208,58 @@
       color: var(--text-muted);
       font-size: 0.95rem;
       padding: 8px 0 0;
+    }
+
+    .streak-history-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      margin: 8px 12px 0;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .streak-history-title {
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #2a3a4a;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .streak-history {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px 0;
+      touch-action: pan-y;
+    }
+
+    .streak-history-empty {
+      padding: 16px 12px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .streak-history .streak-end-item {
+      padding: 8px 12px;
+    }
+
+    .streak-history .streak-end-item .item-flag {
+      font-size: 1.35rem;
+    }
+
+    .streak-history .streak-end-item .item-name {
+      font-size: 0.88rem;
+    }
+
+    .streak-history .streak-end-item .item-answer {
+      font-size: 0.78rem;
     }
 
     .streak-display { color: #ff7043; font-weight: 700; }
@@ -261,37 +312,30 @@
       transform: none !important;
     }
 
-    .flag-center.show-success.dragging {
+    .flag-center.show-success.dragging,
+    .flag-center.show-wrong.dragging {
       cursor: default;
     }
 
-    .wrong-x {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      z-index: 50;
-      width: 42px;
-      height: 42px;
+    .wrong-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(72px, 22vw, 120px);
+      height: clamp(72px, 22vw, 120px);
       border-radius: 50%;
       background: var(--wrong);
       color: #fff;
-      font-size: 1.5rem;
+      font-size: clamp(2rem, 10vw, 3.5rem);
       font-weight: 700;
-      line-height: 42px;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
-      transform: translateX(-50%) scale(0);
+      line-height: 1;
+      animation: successBadgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
-    .wrong-x.visible {
-      animation: topMarkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    @keyframes topMarkPop {
-      0% { transform: translateX(-50%) scale(0); opacity: 0; }
-      55% { transform: translateX(-50%) scale(1.15); opacity: 1; }
-      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    .flag-center.show-wrong {
+      filter: none;
+      cursor: default;
+      transform: none !important;
     }
 
     .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
@@ -395,8 +439,9 @@
     }
 
     .game-area {
-      flex: 1;
+      flex-shrink: 0;
       display: grid;
+      touch-action: none;
       grid-template-rows: auto 1fr auto;
       grid-template-columns: minmax(64px, 18vw) 1fr minmax(64px, 18vw);
       grid-template-areas:
@@ -432,11 +477,11 @@
       }
 
       .game-area {
-        grid-template-columns: 1fr 1.05fr 1fr;
+        grid-template-columns: minmax(72px, 22vw) 1fr minmax(72px, 22vw);
         grid-template-rows: auto auto auto;
         grid-template-areas:
-          "left up right"
-          ". flag ."
+          ". up ."
+          "left flag right"
           ". down .";
         align-content: end;
         justify-content: center;
@@ -447,13 +492,14 @@
       .dir-left,
       .dir-right {
         max-width: 100%;
+        align-self: start;
         font-size: clamp(0.82rem, 3.2vw, 1.05rem);
         min-height: 48px;
         padding: 6px 4px;
       }
 
       .dir-up {
-        max-width: 100%;
+        max-width: min(100%, 280px);
         font-size: clamp(0.95rem, 3.8vw, 1.2rem);
       }
 
@@ -987,7 +1033,6 @@
 
   <!-- Game -->
   <section id="screen-game" class="screen">
-    <div class="wrong-x" id="wrong-x" aria-hidden="true">✕</div>
     <div class="game-header">
       <div class="game-header-row">
         <button class="btn-home" id="game-home-btn" type="button">← Games</button>
@@ -999,6 +1044,10 @@
       </div>
       <p class="prompt" id="game-prompt"></p>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="streak-history-wrap" id="streak-history-wrap">
+      <div class="streak-history-title">This streak</div>
+      <div class="streak-history" id="streak-history"></div>
     </div>
     <div class="game-area" id="game-area">
       <div class="dir-option dir-up"    data-dir="up"    id="opt-up"></div>
@@ -1484,6 +1533,7 @@
     var modeStats = player.modes[mode][route];
     swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
+    renderStreakHistory();
   }
 
   function resumeMode(mode, route) {
@@ -1568,12 +1618,10 @@
     clearFeedbackTimers();
     clearCorrectSuccessTimer();
     correctSuccessActive = false;
-    gameFlag.classList.remove('show-success');
+    gameFlag.classList.remove('show-success', 'show-wrong');
     clearWrongMarkTimer();
     wrongMarkActive = false;
     wrongMarkCallback = null;
-    wrongX.classList.remove('visible');
-    wrongX.setAttribute('aria-hidden', 'true');
     feedbackActive = false;
     if (celebrationActive) {
       celebrationActive = false;
@@ -1628,9 +1676,9 @@
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
-  var wrongX = document.getElementById('wrong-x');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
+  var streakHistory = document.getElementById('streak-history');
 
   function makeSuccessEntry(q) {
     return {
@@ -1641,10 +1689,39 @@
     };
   }
 
-  function formatSuccessAnswer(entry) {
-    if (currentMode === 'flags') return 'Correct';
-    if (currentMode === 'capitals') return entry.answer;
+  function formatSuccessAnswer(entry, mode) {
+    var quizMode = mode || currentMode;
+    if (quizMode === 'flags') return 'Correct';
+    if (quizMode === 'capitals') return entry.answer;
     return entry.answer + ' · ' + WORD_LABELS[entry.wordKey];
+  }
+
+  function buildSuccessListHtml(successes, mode) {
+    if (successes.length === 0) return '';
+    return successes.map(function (entry, i) {
+      return (
+        '<div class="streak-end-item">' +
+          '<span class="item-num">' + (i + 1) + '</span>' +
+          '<span class="item-flag">' + flagEmoji(entry.code) + '</span>' +
+          '<div class="item-body">' +
+            '<div class="item-name">' + escapeHtml(entry.name) + '</div>' +
+            '<div class="item-answer">' + escapeHtml(formatSuccessAnswer(entry, mode)) + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderStreakHistory() {
+    if (!streakHistory || !currentMode) return;
+    var successes = getRouteStats().runSuccesses;
+    if (successes.length === 0) {
+      streakHistory.innerHTML =
+        '<p class="streak-history-empty">Your correct answers will show up here</p>';
+      return;
+    }
+    streakHistory.innerHTML = buildSuccessListHtml(successes, currentMode);
+    streakHistory.scrollTop = streakHistory.scrollHeight;
   }
 
   function renderSuccessList(successes) {
@@ -1652,18 +1729,7 @@
       streakEndList.innerHTML = '<p style="padding:16px;color:var(--text-muted)">No correct answers this streak.</p>';
       return;
     }
-    streakEndList.innerHTML = successes.map(function (entry, i) {
-      return (
-        '<div class="streak-end-item">' +
-          '<span class="item-num">' + (i + 1) + '</span>' +
-          '<span class="item-flag">' + flagEmoji(entry.code) + '</span>' +
-          '<div class="item-body">' +
-            '<div class="item-name">' + escapeHtml(entry.name) + '</div>' +
-            '<div class="item-answer">' + escapeHtml(formatSuccessAnswer(entry)) + '</div>' +
-          '</div>' +
-        '</div>'
-      );
-    }).join('');
+    streakEndList.innerHTML = buildSuccessListHtml(successes, currentMode);
   }
 
   var dirEls = {
@@ -1808,7 +1874,7 @@
     inputLocked = false;
     var modeStats = getRouteStats();
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
-    gameFlag.classList.remove('show-success');
+    gameFlag.classList.remove('show-success', 'show-wrong');
     gameFlag.textContent = flagEmoji(q.country.code);
 
     var promptText;
@@ -1864,6 +1930,7 @@
       }
       saveSession({ screen: 'game', pendingNext: true });
       updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, true);
+      renderStreakHistory();
 
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
         showCelebration(modeStats.currentStreak);
@@ -1878,6 +1945,7 @@
       modeStats.runSuccesses = [];
       savePlayer();
       updateStreakUI(0, bestStreak, false);
+      renderStreakHistory();
       if (lostStreak === 0 && successes.length === 0) {
         showWrongMark(function () {
           inputLocked = false;
@@ -1903,10 +1971,10 @@
     clearCorrectSuccessTimer();
     wrongMarkActive = true;
     wrongMarkCallback = onDone;
-    wrongX.classList.remove('visible');
-    void wrongX.offsetWidth;
-    wrongX.classList.add('visible');
-    wrongX.setAttribute('aria-hidden', 'false');
+    resetFlagPosition();
+    gameFlag.classList.remove('show-success');
+    gameFlag.classList.add('show-wrong');
+    gameFlag.innerHTML = '<span class="wrong-badge">✕</span>';
     wrongMarkTimer = setTimeout(function () {
       dismissWrongMark();
     }, WRONG_MARK_MS);
@@ -1916,8 +1984,7 @@
     if (!wrongMarkActive) return;
     wrongMarkActive = false;
     clearWrongMarkTimer();
-    wrongX.classList.remove('visible');
-    wrongX.setAttribute('aria-hidden', 'true');
+    gameFlag.classList.remove('show-wrong');
     var callback = wrongMarkCallback;
     wrongMarkCallback = null;
     if (callback) callback();
