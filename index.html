@@ -432,11 +432,33 @@
       }
 
       .game-area {
+        grid-template-columns: 1fr 1.05fr 1fr;
         grid-template-rows: auto auto auto;
+        grid-template-areas:
+          "left up right"
+          ". flag ."
+          ". down .";
         align-content: end;
         justify-content: center;
         padding: 4px 8px 16px;
         gap: 8px;
+      }
+
+      .dir-left,
+      .dir-right {
+        max-width: 100%;
+        font-size: clamp(0.82rem, 3.2vw, 1.05rem);
+        min-height: 48px;
+        padding: 6px 4px;
+      }
+
+      .dir-up {
+        max-width: 100%;
+        font-size: clamp(0.95rem, 3.8vw, 1.2rem);
+      }
+
+      .dir-down {
+        max-width: min(100%, 280px);
       }
 
       .flag-center {
