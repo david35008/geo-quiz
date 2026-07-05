@@ -1431,6 +1431,8 @@
   };
   const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
   const ROUTE_LABELS = { random: 'Random', ordered: 'Ordered' };
+  const VALID_MODES = ['flags', 'capitals', 'words'];
+  const VALID_ROUTES = ['random', 'ordered'];
   const DIRECTIONS = ['up', 'down', 'left', 'right'];
 
   const COUNTRIES = [
@@ -2069,11 +2071,114 @@
   var wrongMarkCallback = null;
   var celebrationActive = false;
   var celebrationTimer = null;
+  var skipUrlSync = false;
+  var applyingRoute = false;
+
+  function computeHash() {
+    if (screens.name.classList.contains('active')) return '#/name';
+    if (screens.home.classList.contains('active')) return '#/home';
+    if (screens.route.classList.contains('active')) {
+      return pendingMode ? '#/route/' + pendingMode : '#/home';
+    }
+    if (currentMode && currentRoute &&
+        (screens.game.classList.contains('active') || screens.streakEnd.classList.contains('active'))) {
+      return '#/game/' + currentMode + '/' + currentRoute;
+    }
+    return '#/home';
+  }
+
+  function syncUrl(replace) {
+    if (skipUrlSync || applyingRoute) return;
+    var hash = computeHash();
+    if (location.hash === hash) return;
+    if (replace) history.replaceState(null, '', hash);
+    else history.pushState(null, '', hash);
+  }
+
+  function parseHashRoute() {
+    var raw = location.hash.replace(/^#\/?/, '');
+    var parts = raw ? raw.split('/') : [];
+    if (parts.length === 0 || parts[0] === 'home') return { page: 'home' };
+    if (parts[0] === 'name') return { page: 'name' };
+    if (parts[0] === 'route' && parts[1]) return { page: 'route', mode: parts[1] };
+    if (parts[0] === 'game' && parts[1] && parts[2]) {
+      return { page: 'game', mode: parts[1], route: parts[2] };
+    }
+    return { page: 'home' };
+  }
+
+  function leaveGameView() {
+    clearFeedbackTimers();
+    clearCorrectSuccessTimer();
+    correctSuccessActive = false;
+    gameFlag.classList.remove('show-success', 'show-wrong');
+    clearWrongMarkTimer();
+    wrongMarkActive = false;
+    wrongMarkCallback = null;
+    feedbackActive = false;
+    if (celebrationActive) {
+      celebrationActive = false;
+      if (celebrationTimer) {
+        clearTimeout(celebrationTimer);
+        celebrationTimer = null;
+      }
+      hideMilestonePanel();
+    }
+    inputLocked = false;
+    currentMode = null;
+    currentRoute = null;
+    gameState = null;
+  }
+
+  function enterModeFromUrl(mode, route) {
+    if (!resumeMode(mode, route)) enterMode(mode, route);
+  }
+
+  function applyRouteFromUrl(replace) {
+    if (applyingRoute) return;
+    applyingRoute = true;
+    skipUrlSync = true;
+
+    var parsed = parseHashRoute();
+
+    if (!player.name) {
+      showScreen('name');
+      skipUrlSync = false;
+      applyingRoute = false;
+      syncUrl(true);
+      return;
+    }
+
+    if (parsed.page === 'name') {
+      nameInput.value = player.name;
+      nameSubmit.disabled = player.name.length === 0;
+      leaveGameView();
+      pendingMode = null;
+      showScreen('name');
+    } else if (parsed.page === 'route' && VALID_MODES.indexOf(parsed.mode) !== -1) {
+      leaveGameView();
+      showRoutePicker(parsed.mode);
+    } else if (parsed.page === 'game' &&
+               VALID_MODES.indexOf(parsed.mode) !== -1 &&
+               VALID_ROUTES.indexOf(parsed.route) !== -1) {
+      enterModeFromUrl(parsed.mode, parsed.route);
+    } else {
+      leaveGameView();
+      pendingMode = null;
+      updateHomeStats();
+      showScreen('home');
+    }
+
+    skipUrlSync = false;
+    applyingRoute = false;
+    syncUrl(replace !== false);
+  }
 
   function showScreen(name) {
     Object.keys(screens).forEach(function (k) {
       screens[k].classList.toggle('active', k === name);
     });
+    if (!skipUrlSync) syncUrl(false);
   }
 
   function updateHomeStats() {
@@ -2719,12 +2824,10 @@
   if (!storageAvailable) storageWarning.classList.add('visible');
 
   player = loadPlayer();
-  if (player.name) {
-    updateHomeStats();
-    showScreen('home');
-  } else {
-    showScreen('name');
-  }
+  window.addEventListener('hashchange', function () {
+    applyRouteFromUrl(false);
+  });
+  applyRouteFromUrl(true);
 })();
 </script>
 </body>
