@@ -807,15 +807,41 @@
       min-height: 0;
       display: grid;
       touch-action: none;
-      grid-template-columns: minmax(22px, 7vw) minmax(56px, 15vw) 1fr minmax(56px, 15vw) minmax(22px, 7vw);
+      grid-template-columns: minmax(48px, 15vw) 1fr minmax(48px, 15vw);
       grid-template-rows: auto auto;
       row-gap: 4px;
       column-gap: 6px;
       padding: 8px 8px 56px;
       position: relative;
       align-content: center;
-      align-items: start;
+      align-items: stretch;
       justify-items: center;
+    }
+
+    .side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      grid-row: 2;
+      align-self: stretch;
+      width: 100%;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .side-stack-left { grid-column: 1; }
+    .side-stack-right { grid-column: 3; }
+
+    .side-stack .dir-left,
+    .side-stack .dir-right {
+      flex-shrink: 0;
+      width: 100%;
+      max-width: none;
+    }
+
+    .side-stack .side-label {
+      flex: 1;
+      min-height: 0;
     }
 
     .side-label {
@@ -850,8 +876,10 @@
       transform: scale(1.03);
     }
 
-    .side-label-left { grid-column: 1; grid-row: 2; }
-    .side-label-right { grid-column: 5; grid-row: 2; }
+    .side-label-left,
+    .side-label-right {
+      width: 100%;
+    }
 
     #opt-up {
       grid-column: 1 / -1;
@@ -861,9 +889,7 @@
       justify-self: center;
       width: min(100%, 420px);
     }
-    #opt-left { grid-column: 2; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
-    #game-flag { grid-column: 3; grid-row: 2; align-self: start; margin-top: 4px; }
-    #opt-right { grid-column: 4; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
+    #game-flag { grid-column: 2; grid-row: 2; align-self: start; margin-top: 4px; justify-self: center; width: 100%; }
     #opt-down {
       position: absolute;
       left: 50%;
@@ -895,13 +921,13 @@
       }
 
       .game-area {
-        grid-template-columns: minmax(20px, 6vw) minmax(48px, 14vw) 1fr minmax(48px, 14vw) minmax(20px, 6vw);
+        grid-template-columns: minmax(48px, 14vw) 1fr minmax(48px, 14vw);
         grid-template-rows: auto auto;
         row-gap: 4px;
         column-gap: 6px;
         padding: 4px 8px 56px;
         align-content: center;
-        align-items: start;
+        align-items: stretch;
       }
 
       #opt-up {
@@ -1400,12 +1426,16 @@
         </div>
       </div>
       <div class="game-area" id="game-area">
-        <div class="side-label side-label-left" id="side-label-left" data-dir="left"></div>
-        <div class="side-label side-label-right" id="side-label-right" data-dir="right"></div>
         <div class="dir-option dir-up"    data-dir="up"    id="opt-up"></div>
-        <div class="dir-option dir-left"  data-dir="left"  id="opt-left"></div>
+        <div class="side-stack side-stack-left">
+          <div class="dir-option dir-left"  data-dir="left"  id="opt-left"></div>
+          <div class="side-label side-label-left" id="side-label-left" data-dir="left"></div>
+        </div>
         <div class="flag-center" id="game-flag"></div>
-        <div class="dir-option dir-right" data-dir="right" id="opt-right"></div>
+        <div class="side-stack side-stack-right">
+          <div class="dir-option dir-right" data-dir="right" id="opt-right"></div>
+          <div class="side-label side-label-right" id="side-label-right" data-dir="right"></div>
+        </div>
         <div class="dir-option dir-down"  data-dir="down"  id="opt-down"></div>
       </div>
     </div>
