@@ -1675,11 +1675,21 @@
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 2px;
     }
 
-    .streak-end-actions .btn-secondary {
+    .streak-end-actions .btn {
       width: 100%;
+      margin-top: 0;
+      gap: 8px;
+    }
+
+    .streak-end-actions .btn-icon {
+      font-size: 1.1em;
+      line-height: 1;
+      flex-shrink: 0;
     }
 
     .btn-whatsapp {
@@ -1877,9 +1887,18 @@
         <div class="streak-end-list" id="streak-end-list"></div>
       </div>
       <div class="streak-end-actions">
-        <button class="btn btn-whatsapp" id="streak-end-share" type="button">Share on WhatsApp</button>
-        <button class="btn btn-primary" id="streak-end-continue" type="button">Play again</button>
-        <button class="btn btn-secondary" id="streak-end-other-games" type="button">Other Games</button>
+        <button class="btn btn-primary" id="streak-end-continue" type="button">
+          <span class="btn-icon" aria-hidden="true">🔁</span>
+          Play again!
+        </button>
+        <button class="btn btn-whatsapp" id="streak-end-share" type="button">
+          <span class="btn-icon" aria-hidden="true">💬</span>
+          <span id="streak-end-share-label">Share on WhatsApp</span>
+        </button>
+        <button class="btn btn-secondary" id="streak-end-other-games" type="button">
+          <span class="btn-icon" aria-hidden="true">🎮</span>
+          Other Games
+        </button>
       </div>
     </div>
   </section>
@@ -2835,6 +2854,7 @@
   var streakEndCorrect = document.getElementById('streak-end-correct');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnStreakEndShare = document.getElementById('streak-end-share');
+  var streakEndShareLabel = document.getElementById('streak-end-share-label');
   var btnStreakEndOtherGames = document.getElementById('streak-end-other-games');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
@@ -3792,7 +3812,7 @@
   function proceedShareStreakOnWhatsApp() {
     if (!lastStreakEndSummary || !currentMode || !currentRoute) return;
     btnStreakEndShare.disabled = true;
-    btnStreakEndShare.textContent = 'Preparing…';
+    if (streakEndShareLabel) streakEndShareLabel.textContent = 'Preparing…';
     buildStreakShareImageBlob(lastStreakEndSummary)
       .then(shareImageBlob)
       .catch(function () {
@@ -3800,7 +3820,7 @@
       })
       .finally(function () {
         btnStreakEndShare.disabled = false;
-        btnStreakEndShare.textContent = 'Share on WhatsApp';
+        if (streakEndShareLabel) streakEndShareLabel.textContent = 'Share on WhatsApp';
       });
   }
 
