@@ -3494,8 +3494,8 @@
     y += 28;
     y += 24 + 78 + 26 + 32;
     y += measureAnswersBoxHeight(ctx, summary, contentWidth);
-    y += 76;
-    return y + 48;
+    y += 56;
+    return y + 28;
   }
 
   function drawAnswersBox(ctx, summary, width, startY, contentWidth) {
@@ -3548,7 +3548,7 @@
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    drawCanvasRoundRect(ctx, pad - 8, pad - 8, width - (pad - 8) * 2, height - pad - 36, 16);
+    drawCanvasRoundRect(ctx, pad - 8, pad - 8, width - (pad - 8) * 2, height - pad - 20, 16);
     ctx.fillStyle = SHARE_THEME.card;
     ctx.fill();
     ctx.strokeStyle = SHARE_THEME.cardBorder;
@@ -3610,18 +3610,14 @@
     ctx.textBaseline = 'bottom';
     ctx.fillStyle = SHARE_THEME.textMuted;
     ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText('Play Geo Quiz', width / 2, height - 56);
+    ctx.fillText('Play Geo Quiz', width / 2, height - 36);
     ctx.fillStyle = SHARE_THEME.primary;
     ctx.font = '500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     var url = getGameShareUrl();
     var urlLines = wrapCanvasLines(ctx, url, contentWidth);
     urlLines.forEach(function (line, index) {
-      ctx.fillText(line, width / 2, height - 40 - (urlLines.length - 1 - index) * 14);
+      ctx.fillText(line, width / 2, height - 22 - (urlLines.length - 1 - index) * 14);
     });
-    ctx.fillStyle = SHARE_THEME.textMuted;
-    ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText('Developed by ' + APP_DEVELOPER, width / 2, height - 24);
-    ctx.fillText('© ' + new Date().getFullYear() + ' All rights reserved.', width / 2, height - 10);
     ctx.textBaseline = 'alphabetic';
   }
 
