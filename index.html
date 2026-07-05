@@ -210,8 +210,20 @@
       padding: 8px 0 0;
     }
 
-    .score-display { color: var(--accent); font-weight: 600; }
-    .streak-display { color: #ff7043; }
+    .streak-display { color: #ff7043; font-weight: 700; }
+    .streak-display.streak-hero { font-size: 1.35rem; }
+    .streak-display.streak-pop {
+      animation: streakPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes streakPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); color: #ffab40; }
+      100% { transform: scale(1); }
+    }
+
+    .milestone-label { color: var(--accent); font-size: 0.85rem; }
+    .best-streak-label { color: var(--text-muted); font-size: 0.85rem; }
 
     .progress-bar {
       height: 4px;
@@ -409,6 +421,80 @@
       gap: 12px;
       margin-top: 8px;
     }
+
+    /* Milestone celebration */
+    #screen-celebration {
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      z-index: 200;
+      cursor: pointer;
+      background: linear-gradient(160deg, #1a472a 0%, #2e7d32 45%, #1b5e20 100%);
+      overflow: hidden;
+    }
+
+    .celebration-confetti {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -12px;
+      width: 10px;
+      height: 14px;
+      opacity: 0.9;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0.3; }
+    }
+
+    .celebration-content {
+      position: relative;
+      z-index: 1;
+      animation: celebrationBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes celebrationBounce {
+      0% { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .celebration-icon {
+      font-size: 5rem;
+      line-height: 1;
+      margin-bottom: 12px;
+      animation: celebrationPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes celebrationPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    #screen-celebration h2 {
+      font-size: 2.8rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    #screen-celebration .celebration-sub {
+      font-size: 1.2rem;
+      opacity: 0.95;
+      margin-bottom: 8px;
+    }
+
+    #screen-celebration .celebration-best {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -435,19 +521,19 @@
       <div class="mode-card" data-mode="flags">
         <div class="mode-icon">🏳️</div>
         <h2>Flags</h2>
-        <p>Identify countries by their flag</p>
+        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-flags"></div>
       </div>
       <div class="mode-card" data-mode="capitals">
         <div class="mode-icon">🏛️</div>
         <h2>Capitals</h2>
-        <p>Match flags to capital cities</p>
+        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-capitals"></div>
       </div>
       <div class="mode-card" data-mode="words">
         <div class="mode-icon">💬</div>
         <h2>Words</h2>
-        <p>Learn basic words in each language</p>
+        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-words"></div>
       </div>
     </div>
@@ -458,11 +544,11 @@
     <div class="game-header">
       <div class="game-header-row">
         <span id="game-mode-label"></span>
-        <span>Round <span id="game-round"></span> · Q<span id="game-question-num"></span>/10</span>
+        <span class="streak-display streak-hero">🔥 <span id="game-streak">0</span></span>
       </div>
       <div class="game-header-row">
-        <span class="score-display">Score: <span id="game-round-score">0</span></span>
-        <span class="streak-display">🔥 <span id="game-streak">0</span></span>
+        <span class="best-streak-label">Best: <span id="game-best-streak">0</span></span>
+        <span class="milestone-label" id="milestone-label">Next reward at 5</span>
       </div>
       <p class="prompt" id="game-prompt"></p>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -485,33 +571,15 @@
     <p class="feedback-timer" id="feedback-timer"></p>
   </section>
 
-  <!-- Round summary -->
-  <section id="screen-summary" class="screen">
-    <div class="summary-card">
-      <h2>Round Complete!</h2>
-      <p id="summary-mode-label"></p>
-      <div class="summary-stats">
-        <div class="stat-box">
-          <div class="stat-value" id="summary-score">0</div>
-          <div class="stat-label">Round Score</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="summary-accuracy">0%</div>
-          <div class="stat-label">Accuracy</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="summary-best-streak">0</div>
-          <div class="stat-label">Best Streak</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="summary-total">0</div>
-          <div class="stat-label">Total Score</div>
-        </div>
-      </div>
-      <div class="summary-actions">
-        <button class="btn btn-primary" id="btn-next-round">Next Round</button>
-        <button class="btn btn-secondary" id="btn-go-home">Back to Home</button>
-      </div>
+  <!-- Milestone celebration -->
+  <section id="screen-celebration" class="screen">
+    <div class="celebration-confetti" id="celebration-confetti"></div>
+    <div class="celebration-content">
+      <div class="celebration-icon" id="celebration-icon">🎉</div>
+      <h2 id="celebration-title"></h2>
+      <p class="celebration-sub" id="celebration-message"></p>
+      <p class="celebration-best" id="celebration-best"></p>
+      <p class="feedback-continue">Tap to continue</p>
     </div>
   </section>
 
@@ -520,11 +588,23 @@
   'use strict';
 
   const STORAGE_KEY = 'geoQuizPlayer';
-  const QUESTIONS_PER_ROUND = 10;
+  const STREAK_MILESTONE = 5;
   const SWIPE_THRESHOLD = 40;
   const FLAG_DRAG_MAX = 72;
   const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
   const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
+  const CELEBRATION_AUTO_DISMISS_MS = 2200;
+  const MILESTONE_ICONS = ['🎉', '🔥', '⭐', '🏆', '👑', '💎', '🌍', '🚀'];
+  const MILESTONE_MESSAGES = [
+    'Nice start! Keep going!',
+    'You\'re on a roll!',
+    'Unstoppable!',
+    'Geography master!',
+    'Legendary streak!',
+    'Absolutely incredible!',
+    'World class!',
+    'Hall of fame!'
+  ];
   const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
   const WORD_LABELS = {
     hello: 'Hello',
@@ -754,7 +834,12 @@
   }
 
   function defaultModeStats() {
-    return { round: 1, totalScore: 0, bestRoundScore: 0, questionsAnswered: 0, correctCount: 0 };
+    return { currentStreak: 0, bestStreak: 0, questionsAnswered: 0, correctCount: 0 };
+  }
+
+  function migrateModeStats(raw) {
+    if (raw && raw.currentStreak !== undefined) return raw;
+    return defaultModeStats();
   }
 
   function defaultPlayer() {
@@ -787,6 +872,7 @@
       if (!data.modes) data.modes = defaultPlayer().modes;
       ['flags', 'capitals', 'words'].forEach(function (m) {
         if (!data.modes[m]) data.modes[m] = defaultModeStats();
+        else data.modes[m] = migrateModeStats(data.modes[m]);
       });
       return data;
     } catch (e) {
@@ -807,7 +893,7 @@
     home: document.getElementById('screen-home'),
     game: document.getElementById('screen-game'),
     feedback: document.getElementById('screen-feedback'),
-    summary: document.getElementById('screen-summary')
+    celebration: document.getElementById('screen-celebration')
   };
 
   var nameInput = document.getElementById('name-input');
@@ -823,8 +909,15 @@
   var feedbackDetail = document.getElementById('feedback-detail');
   var feedbackContinue = document.getElementById('feedback-continue');
   var feedbackTimer = document.getElementById('feedback-timer');
-  var btnNextRound = document.getElementById('btn-next-round');
-  var btnGoHome = document.getElementById('btn-go-home');
+  var celebrationScreen = document.getElementById('screen-celebration');
+  var celebrationConfetti = document.getElementById('celebration-confetti');
+  var celebrationIcon = document.getElementById('celebration-icon');
+  var celebrationTitle = document.getElementById('celebration-title');
+  var celebrationMessage = document.getElementById('celebration-message');
+  var celebrationBest = document.getElementById('celebration-best');
+  var gameStreakEl = document.getElementById('game-streak');
+  var streakHeroEl = document.querySelector('.streak-hero');
+  var milestoneLabel = document.getElementById('milestone-label');
 
   var dirEls = {
     up: document.getElementById('opt-up'),
@@ -836,10 +929,12 @@
   // --- State ---
   var player = defaultPlayer();
   var currentMode = null;
-  var roundState = null;
+  var gameState = null;
   var inputLocked = false;
   var feedbackActive = false;
   var feedbackAutoDismissTimer = null;
+  var celebrationActive = false;
+  var celebrationTimer = null;
 
   function showScreen(name) {
     Object.keys(screens).forEach(function (k) {
@@ -852,13 +947,34 @@
     ['flags', 'capitals', 'words'].forEach(function (mode) {
       var s = player.modes[mode];
       document.getElementById('stats-' + mode).textContent =
-        'Round ' + s.round + ' · Best: ' + s.bestRoundScore + ' · Total: ' + s.totalScore;
+        '🔥 ' + s.currentStreak + ' streak · Best: ' + s.bestStreak;
     });
   }
 
+  function nextMilestoneAt(streak) {
+    return Math.ceil((streak + 1) / STREAK_MILESTONE) * STREAK_MILESTONE;
+  }
+
+  function updateStreakUI(streak, bestStreak, animate) {
+    gameStreakEl.textContent = streak;
+    document.getElementById('game-best-streak').textContent = bestStreak;
+    var nextAt = nextMilestoneAt(streak);
+    var progress = streak === 0 ? 0 : ((streak % STREAK_MILESTONE) / STREAK_MILESTONE) * 100;
+    if (streak > 0 && streak % STREAK_MILESTONE === 0) progress = 100;
+    document.getElementById('progress-fill').style.width = progress + '%';
+    milestoneLabel.textContent = streak % STREAK_MILESTONE === 0 && streak > 0
+      ? 'Reward unlocked!'
+      : 'Next reward at ' + nextAt;
+    if (animate && streakHeroEl) {
+      streakHeroEl.classList.remove('streak-pop');
+      void streakHeroEl.offsetWidth;
+      streakHeroEl.classList.add('streak-pop');
+    }
+  }
+
   // --- Question generation ---
-  function pickCountryForRound(round) {
-    var targetTier = Math.min(round, 5);
+  function pickCountryForStreak(streak) {
+    var targetTier = Math.min(Math.floor(streak / STREAK_MILESTONE) + 1, 5);
     var tierMinus = Math.max(1, targetTier - 1);
     var tierPlus = Math.min(5, targetTier + 1);
     var roll = Math.random();
@@ -900,11 +1016,11 @@
     return candidates.slice(0, count);
   }
 
-  function buildQuestion(mode, round, usedCodes) {
+  function buildQuestion(mode, streak, usedCodes) {
     var country;
     var attempts = 0;
     do {
-      country = pickCountryForRound(round);
+      country = pickCountryForStreak(streak);
       attempts++;
     } while (usedCodes.indexOf(country.code) !== -1 && attempts < 50);
 
@@ -927,43 +1043,37 @@
     };
   }
 
-  function startRound(mode) {
+  function startGame(mode) {
     currentMode = mode;
     var modeStats = player.modes[mode];
-    roundState = {
-      round: modeStats.round,
-      questionIndex: 0,
-      roundScore: 0,
-      streak: 0,
-      bestStreak: 0,
-      correctInRound: 0,
+    gameState = {
       usedCodes: [],
       currentQuestion: null,
       questionStartTime: 0
     };
     showScreen('game');
     document.getElementById('game-mode-label').textContent = MODE_LABELS[mode];
-    swipeHint.classList.toggle('hidden', modeStats.round > 1);
+    swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
+    updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
     nextQuestion();
   }
 
   function nextQuestion() {
-    if (roundState.questionIndex >= QUESTIONS_PER_ROUND) {
-      endRound();
-      return;
+    var modeStats = player.modes[currentMode];
+    gameState.currentQuestion = buildQuestion(
+      currentMode,
+      modeStats.currentStreak,
+      gameState.usedCodes
+    );
+    gameState.usedCodes.push(gameState.currentQuestion.country.code);
+    if (gameState.usedCodes.length > 30) {
+      gameState.usedCodes = gameState.usedCodes.slice(-20);
     }
-
-    roundState.currentQuestion = buildQuestion(currentMode, roundState.round, roundState.usedCodes);
-    roundState.usedCodes.push(roundState.currentQuestion.country.code);
-    roundState.questionStartTime = Date.now();
+    gameState.questionStartTime = Date.now();
     inputLocked = false;
 
-    var q = roundState.currentQuestion;
-    document.getElementById('game-round').textContent = roundState.round;
-    document.getElementById('game-question-num').textContent = roundState.questionIndex + 1;
-    document.getElementById('game-round-score').textContent = roundState.roundScore;
-    document.getElementById('game-streak').textContent = roundState.streak;
-    document.getElementById('progress-fill').style.width = ((roundState.questionIndex / QUESTIONS_PER_ROUND) * 100) + '%';
+    var q = gameState.currentQuestion;
+    updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
     document.getElementById('game-flag').textContent = flagEmoji(q.country.code);
 
     var promptText;
@@ -979,39 +1089,37 @@
     resetFlagPosition();
   }
 
-  function scoreAnswer(isCorrect, elapsedMs) {
-    if (!isCorrect) {
-      roundState.streak = 0;
-      return 0;
-    }
-    roundState.streak++;
-    if (roundState.streak > roundState.bestStreak) roundState.bestStreak = roundState.streak;
-
-    var base = 100;
-    var speedBonus = Math.max(0, Math.round(50 * (1 - elapsedMs / 3000)));
-    var streakBonus = 25 * roundState.streak;
-    return base + speedBonus + streakBonus;
-  }
-
   function handleAnswer(dir) {
     if (inputLocked) return;
     inputLocked = true;
 
-    var q = roundState.currentQuestion;
+    var q = gameState.currentQuestion;
     var chosen = q.mapping[dir];
     var isCorrect = dir === q.correctDir;
-    var elapsed = Date.now() - roundState.questionStartTime;
-    var points = scoreAnswer(isCorrect, elapsed);
-
-    roundState.roundScore += points;
-    if (isCorrect) roundState.correctInRound++;
-
     var modeStats = player.modes[currentMode];
-    modeStats.questionsAnswered++;
-    if (isCorrect) modeStats.correctCount++;
-    savePlayer();
 
-    showFeedback(isCorrect, chosen, q.correct, points);
+    modeStats.questionsAnswered++;
+    if (isCorrect) {
+      modeStats.correctCount++;
+      modeStats.currentStreak++;
+      if (modeStats.currentStreak > modeStats.bestStreak) {
+        modeStats.bestStreak = modeStats.currentStreak;
+      }
+      savePlayer();
+      updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, true);
+
+      if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
+        showCelebration(modeStats.currentStreak);
+      } else {
+        showFeedback(true, chosen, q.correct, modeStats.currentStreak);
+      }
+    } else {
+      var lostStreak = modeStats.currentStreak;
+      modeStats.currentStreak = 0;
+      savePlayer();
+      updateStreakUI(0, modeStats.bestStreak, false);
+      showFeedback(false, chosen, q.correct, lostStreak);
+    }
   }
 
   function clearFeedbackTimers() {
@@ -1021,13 +1129,18 @@
     }
   }
 
-  function showFeedback(isCorrect, chosen, correct, points) {
+  function showFeedback(isCorrect, chosen, correct, streakInfo) {
     feedbackScreen.className = 'screen active ' + (isCorrect ? 'correct' : 'wrong');
     feedbackTitle.textContent = isCorrect ? 'Correct!' : 'Wrong';
     if (isCorrect) {
-      feedbackDetail.innerHTML = '<p>' + correct + '</p><p>+' + points + ' points</p>';
-    } else {
       feedbackDetail.innerHTML =
+        '<p>' + correct + '</p><p>🔥 Streak: ' + streakInfo + '</p>';
+    } else {
+      var lostHtml = streakInfo > 0
+        ? '<p>Streak lost! Was at <strong>' + streakInfo + '</strong></p>'
+        : '';
+      feedbackDetail.innerHTML =
+        lostHtml +
         '<p>You chose: <strong>' + chosen + '</strong></p>' +
         '<p>Correct answer: <strong>' + correct + '</strong></p>';
     }
@@ -1048,27 +1161,52 @@
     if (!feedbackActive) return;
     feedbackActive = false;
     clearFeedbackTimers();
-    roundState.questionIndex++;
     showScreen('game');
     nextQuestion();
   }
 
-  function endRound() {
-    var modeStats = player.modes[currentMode];
-    modeStats.totalScore += roundState.roundScore;
-    if (roundState.roundScore > modeStats.bestRoundScore) {
-      modeStats.bestRoundScore = roundState.roundScore;
+  function spawnConfetti() {
+    celebrationConfetti.innerHTML = '';
+    var colors = ['#ffeb3b', '#ff7043', '#4fc3f7', '#81c784', '#ba68c8', '#fff176', '#f06292'];
+    for (var i = 0; i < 55; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      piece.style.animationDelay = (Math.random() * 0.6) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      celebrationConfetti.appendChild(piece);
     }
-    modeStats.round++;
-    savePlayer();
+  }
 
-    var accuracy = Math.round((roundState.correctInRound / QUESTIONS_PER_ROUND) * 100);
-    document.getElementById('summary-mode-label').textContent = MODE_LABELS[currentMode] + ' · Round ' + roundState.round;
-    document.getElementById('summary-score').textContent = roundState.roundScore;
-    document.getElementById('summary-accuracy').textContent = accuracy + '%';
-    document.getElementById('summary-best-streak').textContent = roundState.bestStreak;
-    document.getElementById('summary-total').textContent = modeStats.totalScore;
-    showScreen('summary');
+  function showCelebration(streak) {
+    var milestoneIndex = Math.floor(streak / STREAK_MILESTONE) - 1;
+    celebrationIcon.textContent = MILESTONE_ICONS[milestoneIndex % MILESTONE_ICONS.length];
+    celebrationTitle.textContent = streak + ' in a row!';
+    celebrationMessage.textContent = MILESTONE_MESSAGES[milestoneIndex % MILESTONE_MESSAGES.length];
+    var modeStats = player.modes[currentMode];
+    celebrationBest.textContent = streak >= modeStats.bestStreak
+      ? '🏅 New personal best!'
+      : 'Best: ' + modeStats.bestStreak;
+    spawnConfetti();
+    showScreen('celebration');
+    celebrationActive = true;
+    if (celebrationTimer) clearTimeout(celebrationTimer);
+    celebrationTimer = setTimeout(function () {
+      dismissCelebration();
+    }, CELEBRATION_AUTO_DISMISS_MS);
+  }
+
+  function dismissCelebration() {
+    if (!celebrationActive) return;
+    celebrationActive = false;
+    if (celebrationTimer) {
+      clearTimeout(celebrationTimer);
+      celebrationTimer = null;
+    }
+    showScreen('game');
+    nextQuestion();
   }
 
   // --- Swipe / flag drag handling ---
@@ -1198,6 +1336,12 @@
     dismissFeedback();
   });
 
+  celebrationScreen.addEventListener('click', dismissCelebration);
+  celebrationScreen.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    dismissCelebration();
+  });
+
   // --- Name screen ---
   nameInput.addEventListener('input', function () {
     nameSubmit.disabled = nameInput.value.trim().length === 0;
@@ -1228,17 +1372,8 @@
   // --- Home mode cards ---
   document.querySelectorAll('.mode-card').forEach(function (card) {
     card.addEventListener('click', function () {
-      startRound(card.getAttribute('data-mode'));
+      startGame(card.getAttribute('data-mode'));
     });
-  });
-
-  btnNextRound.addEventListener('click', function () {
-    startRound(currentMode);
-  });
-
-  btnGoHome.addEventListener('click', function () {
-    updateHomeStats();
-    showScreen('home');
   });
 
   // --- Init ---
