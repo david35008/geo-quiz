@@ -725,7 +725,9 @@
     }
 
     /* Route picker */
-    #screen-route {
+    #screen-route,
+    #screen-words-style,
+    #screen-word-pick {
       padding: 24px;
       overflow-y: auto;
     }
@@ -750,6 +752,10 @@
       color: var(--text-muted);
       font-size: 0.9rem;
       margin-top: 4px;
+    }
+
+    .word-pick-grid {
+      grid-template-columns: 1fr;
     }
 
     .route-grid {
@@ -1451,13 +1457,47 @@
     </div>
   </section>
 
+  <!-- Words style picker -->
+  <section id="screen-words-style" class="screen">
+    <div class="route-picker">
+      <button class="btn-home" id="words-style-back" type="button">← Games</button>
+      <div class="route-picker-header">
+        <h2>Words</h2>
+        <p>How do you want to pick the word?</p>
+      </div>
+      <div class="route-grid">
+        <div class="route-card" data-words-style="fixed">
+          <h3>✏️ Choose a word</h3>
+          <p>Pick hello, thank you, yes, no, or goodbye — then random or ordered countries</p>
+        </div>
+        <div class="route-card" data-words-style="randomWords">
+          <h3>🎲 Random words</h3>
+          <p>A different word each question — then random or ordered countries</p>
+          <div class="route-stats" id="words-style-stats-random"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Word key picker -->
+  <section id="screen-word-pick" class="screen">
+    <div class="route-picker">
+      <button class="btn-home" id="word-pick-back" type="button">← Words</button>
+      <div class="route-picker-header">
+        <h2>Choose a word</h2>
+        <p>Then pick random or ordered countries</p>
+      </div>
+      <div class="route-grid word-pick-grid" id="word-pick-grid"></div>
+    </div>
+  </section>
+
   <!-- Route picker -->
   <section id="screen-route" class="screen">
     <div class="route-picker">
       <button class="btn-home" id="route-back" type="button">← Games</button>
       <div class="route-picker-header">
         <h2 id="route-mode-title">Flags</h2>
-        <p>Choose how countries are picked</p>
+        <p id="route-picker-subtitle">Choose how countries are picked</p>
       </div>
       <div class="route-grid">
         <div class="route-card" data-route="random">
@@ -1882,6 +1922,14 @@
     return { random: defaultRouteStats(), ordered: defaultRouteStats() };
   }
 
+  function defaultWordsModeBundle() {
+    var fixed = {};
+    WORD_KEYS.forEach(function (key) {
+      fixed[key] = defaultModeBundle();
+    });
+    return { randomWords: defaultModeBundle(), fixed: fixed };
+  }
+
   function migrateRouteStats(raw) {
     if (!raw) return defaultRouteStats();
     if (!raw.runSuccesses) raw.runSuccesses = [];
@@ -1890,6 +1938,35 @@
       raw.session.orderedIndex = 0;
     }
     return raw;
+  }
+
+  function migrateWordsStats(raw) {
+    if (!raw) return defaultWordsModeBundle();
+    if (raw.randomWords && raw.fixed) {
+      raw.randomWords.random = migrateRouteStats(raw.randomWords.random);
+      raw.randomWords.ordered = migrateRouteStats(raw.randomWords.ordered);
+      WORD_KEYS.forEach(function (key) {
+        if (!raw.fixed[key]) raw.fixed[key] = defaultModeBundle();
+        else {
+          raw.fixed[key].random = migrateRouteStats(raw.fixed[key].random);
+          raw.fixed[key].ordered = migrateRouteStats(raw.fixed[key].ordered);
+        }
+      });
+      return raw;
+    }
+    if (raw.random && raw.ordered && !raw.randomWords) {
+      return {
+        randomWords: {
+          random: migrateRouteStats(raw.random),
+          ordered: migrateRouteStats(raw.ordered)
+        },
+        fixed: WORD_KEYS.reduce(function (acc, key) {
+          acc[key] = defaultModeBundle();
+          return acc;
+        }, {})
+      };
+    }
+    return defaultWordsModeBundle();
   }
 
   function migrateModeStats(raw) {
@@ -1920,7 +1997,11 @@
     return {
       name: '',
       createdAt: new Date().toISOString(),
-      modes: { flags: defaultModeBundle(), capitals: defaultModeBundle(), words: defaultModeBundle() }
+      modes: {
+        flags: defaultModeBundle(),
+        capitals: defaultModeBundle(),
+        words: defaultWordsModeBundle()
+      }
     };
   }
 
@@ -1928,16 +2009,31 @@
     if (!data.activeSession || !data.activeSession.mode) return;
     var legacyMode = data.activeSession.mode;
     if (!data.modes[legacyMode]) return;
-    data.modes[legacyMode] = migrateModeStats(data.modes[legacyMode]);
-    data.modes[legacyMode].random.session = {
-      route: 'random',
-      screen: data.activeSession.screen || 'game',
-      usedCodes: data.activeSession.usedCodes || [],
-      orderedIndex: 0,
-      question: data.activeSession.question || null,
-      pendingNext: !!data.activeSession.pendingNext,
-      streakEnd: data.activeSession.streakEnd || null
-    };
+    if (legacyMode === 'words') {
+      data.modes.words = migrateWordsStats(data.modes.words);
+      data.modes.words.randomWords.random.session = {
+        route: 'random',
+        wordsStyle: 'randomWords',
+        fixedWordKey: null,
+        screen: data.activeSession.screen || 'game',
+        usedCodes: data.activeSession.usedCodes || [],
+        orderedIndex: 0,
+        question: data.activeSession.question || null,
+        pendingNext: !!data.activeSession.pendingNext,
+        streakEnd: data.activeSession.streakEnd || null
+      };
+    } else {
+      data.modes[legacyMode] = migrateModeStats(data.modes[legacyMode]);
+      data.modes[legacyMode].random.session = {
+        route: 'random',
+        screen: data.activeSession.screen || 'game',
+        usedCodes: data.activeSession.usedCodes || [],
+        orderedIndex: 0,
+        question: data.activeSession.question || null,
+        pendingNext: !!data.activeSession.pendingNext,
+        streakEnd: data.activeSession.streakEnd || null
+      };
+    }
     delete data.activeSession;
   }
 
@@ -1962,8 +2058,13 @@
       var data = JSON.parse(raw);
       if (!data.modes) data.modes = defaultPlayer().modes;
       ['flags', 'capitals', 'words'].forEach(function (m) {
-        if (!data.modes[m]) data.modes[m] = defaultModeBundle();
-        else data.modes[m] = migrateModeStats(data.modes[m]);
+        if (!data.modes[m]) {
+          data.modes[m] = m === 'words' ? defaultWordsModeBundle() : defaultModeBundle();
+        } else if (m === 'words') {
+          data.modes[m] = migrateWordsStats(data.modes[m]);
+        } else {
+          data.modes[m] = migrateModeStats(data.modes[m]);
+        }
       });
       migrateLegacySession(data);
       return data;
@@ -2005,8 +2106,10 @@
   function saveSession(opts) {
     opts = opts || {};
     if (!currentMode || !currentRoute || !gameState) return;
-    player.modes[currentMode][currentRoute].session = {
+    getRouteStats().session = {
       route: currentRoute,
+      wordsStyle: currentMode === 'words' ? currentWordsStyle : null,
+      fixedWordKey: currentMode === 'words' && currentWordsStyle === 'fixed' ? currentFixedWordKey : null,
       screen: opts.screen || 'game',
       usedCodes: gameState.usedCodes.slice(),
       orderedIndex: gameState.orderedIndex || 0,
@@ -2017,32 +2120,91 @@
     savePlayer();
   }
 
-  function clearModeSession(mode, route) {
-    if (!player.modes[mode] || !player.modes[mode][route]) return;
-    player.modes[mode][route].session = null;
+  function clearModeSession(mode, route, wordsStyle, wordKey) {
+    var stats = mode === 'words'
+      ? getRouteStatsFor(mode, route, wordsStyle, wordKey)
+      : player.modes[mode][route];
+    if (!stats) return;
+    stats.session = null;
     savePlayer();
   }
 
+  function getWordsBundle(wordsStyle, wordKey) {
+    if (wordsStyle === 'randomWords') return player.modes.words.randomWords;
+    return player.modes.words.fixed[wordKey];
+  }
+
+  function getRouteStatsFor(mode, route, wordsStyle, wordKey) {
+    if (mode === 'words') return getWordsBundle(wordsStyle, wordKey)[route];
+    return player.modes[mode][route];
+  }
+
   function getRouteStats() {
+    if (currentMode === 'words') {
+      return getRouteStatsFor(currentMode, currentRoute, currentWordsStyle, currentFixedWordKey);
+    }
     return player.modes[currentMode][currentRoute];
   }
 
-  function prepareGameScreen(mode, route) {
+  function wordsBundleHasSession(bundle) {
+    return !!(bundle.random.session || bundle.ordered.session);
+  }
+
+  function wordsModeHasSession() {
+    var words = player.modes.words;
+    if (wordsBundleHasSession(words.randomWords)) return true;
+    for (var i = 0; i < WORD_KEYS.length; i++) {
+      if (wordsBundleHasSession(words.fixed[WORD_KEYS[i]])) return true;
+    }
+    return false;
+  }
+
+  function maxWordsStreak(bundle) {
+    return Math.max(bundle.random.currentStreak, bundle.ordered.currentStreak);
+  }
+
+  function maxFixedWordsStreak() {
+    var best = 0;
+    WORD_KEYS.forEach(function (key) {
+      var streak = maxWordsStreak(player.modes.words.fixed[key]);
+      if (streak > best) best = streak;
+    });
+    return best;
+  }
+
+  function buildGameModeLabel(mode, route, wordsStyle, wordKey) {
+    var label = MODE_LABELS[mode];
+    if (mode === 'words') {
+      if (wordsStyle === 'fixed' && wordKey) label += ' · ' + WORD_LABELS[wordKey];
+      else label += ' · Random words';
+    }
+    return label + ' · ' + ROUTE_LABELS[route];
+  }
+
+  function prepareGameScreen(mode, route, wordsStyle, wordKey) {
     showScreen('game');
     document.getElementById('game-mode-label').textContent =
-      MODE_LABELS[mode] + ' · ' + ROUTE_LABELS[route];
-    var modeStats = player.modes[mode][route];
+      buildGameModeLabel(mode, route, wordsStyle, wordKey);
+    var modeStats = getRouteStatsFor(mode, route, wordsStyle, wordKey);
     swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
     renderStreakHistory();
   }
 
-  function resumeMode(mode, route) {
-    var session = player.modes[mode][route].session;
+  function resumeMode(mode, route, wordsStyle, wordKey) {
+    var stats = getRouteStatsFor(mode, route, wordsStyle, wordKey);
+    var session = stats.session;
     if (!session) return false;
 
     currentMode = mode;
     currentRoute = route;
+    if (mode === 'words') {
+      currentWordsStyle = wordsStyle;
+      currentFixedWordKey = wordKey || null;
+    } else {
+      currentWordsStyle = null;
+      currentFixedWordKey = null;
+    }
     gameState = {
       usedCodes: session.usedCodes ? session.usedCodes.slice() : [],
       orderedIndex: session.orderedIndex || 0,
@@ -2051,14 +2213,14 @@
     };
 
     if (session.screen === 'streakEnd' && session.streakEnd) {
-      prepareGameScreen(mode, route);
+      prepareGameScreen(mode, route, wordsStyle, wordKey);
       var se = session.streakEnd;
       updateStreakUI(0, se.bestStreak, false);
       showStreakEndSummary(se.lostStreak, se.bestStreak, se.successes, se.chosen, se.correct, true);
       return true;
     }
 
-    prepareGameScreen(mode, route);
+    prepareGameScreen(mode, route, wordsStyle, wordKey);
 
     if (session.pendingNext) {
       nextQuestion();
@@ -2067,9 +2229,11 @@
 
     var q = deserializeQuestion(session.question);
     if (!q) {
-      clearModeSession(mode, route);
+      clearModeSession(mode, route, wordsStyle, wordKey);
       currentMode = null;
       currentRoute = null;
+      currentWordsStyle = null;
+      currentFixedWordKey = null;
       gameState = null;
       return false;
     }
@@ -2079,20 +2243,27 @@
     return true;
   }
 
-  function beginOrderedRun(mode, route) {
-    var stats = player.modes[mode][route];
+  function beginOrderedRun(mode, route, wordsStyle, wordKey) {
+    var stats = getRouteStatsFor(mode, route, wordsStyle, wordKey);
     stats.currentStreak = 0;
     stats.runSuccesses = [];
-    clearModeSession(mode, route);
+    clearModeSession(mode, route, wordsStyle, wordKey);
     currentMode = mode;
     currentRoute = route;
+    if (mode === 'words') {
+      currentWordsStyle = wordsStyle;
+      currentFixedWordKey = wordKey || null;
+    } else {
+      currentWordsStyle = null;
+      currentFixedWordKey = null;
+    }
     gameState = {
       usedCodes: [],
       orderedIndex: 0,
       currentQuestion: null,
       questionStartTime: 0
     };
-    prepareGameScreen(mode, route);
+    prepareGameScreen(mode, route, wordsStyle, wordKey);
     nextQuestion();
   }
 
@@ -2102,17 +2273,24 @@
     var stats = getRouteStats();
     stats.currentStreak = 0;
     stats.runSuccesses = [];
-    clearModeSession(currentMode, currentRoute);
+    clearModeSession(currentMode, currentRoute, currentWordsStyle, currentFixedWordKey);
   }
 
-  function enterMode(mode, route, freshStart) {
+  function enterMode(mode, route, freshStart, wordsStyle, wordKey) {
+    if (mode === 'words') {
+      currentWordsStyle = wordsStyle;
+      currentFixedWordKey = wordKey || null;
+    } else {
+      currentWordsStyle = null;
+      currentFixedWordKey = null;
+    }
     if (route === 'ordered' && freshStart) {
-      beginOrderedRun(mode, route);
+      beginOrderedRun(mode, route, wordsStyle, wordKey);
       return;
     }
-    if (resumeMode(mode, route)) return;
+    if (resumeMode(mode, route, wordsStyle, wordKey)) return;
     if (route === 'ordered') {
-      beginOrderedRun(mode, route);
+      beginOrderedRun(mode, route, wordsStyle, wordKey);
       return;
     }
     currentMode = mode;
@@ -2123,19 +2301,77 @@
       currentQuestion: null,
       questionStartTime: 0
     };
-    prepareGameScreen(mode, route);
+    prepareGameScreen(mode, route, wordsStyle, wordKey);
     nextQuestion();
+  }
+
+  function showWordsStylePicker() {
+    pendingMode = 'words';
+    pendingWordsStyle = null;
+    pendingFixedWordKey = null;
+    var rw = player.modes.words.randomWords;
+    var statsEl = document.getElementById('words-style-stats-random');
+    if (statsEl) {
+      statsEl.textContent =
+        '🔥 ' + maxWordsStreak(rw) + ' streak · Best: ' +
+        Math.max(rw.random.bestStreak, rw.ordered.bestStreak);
+    }
+    showScreen('wordsStyle');
+  }
+
+  function showWordPicker() {
+    pendingMode = 'words';
+    pendingWordsStyle = 'fixed';
+    pendingFixedWordKey = null;
+    var grid = document.getElementById('word-pick-grid');
+    grid.innerHTML = WORD_KEYS.map(function (key) {
+      var bundle = player.modes.words.fixed[key];
+      var streak = maxWordsStreak(bundle);
+      var best = Math.max(bundle.random.bestStreak, bundle.ordered.bestStreak);
+      var hasSession = wordsBundleHasSession(bundle);
+      return (
+        '<div class="route-card word-pick-card' + (hasSession ? ' has-progress' : '') +
+        '" data-word-key="' + key + '">' +
+        '<h3>' + escapeHtml(WORD_LABELS[key]) + '</h3>' +
+        '<p>Practice "' + escapeHtml(WORD_LABELS[key].toLowerCase()) + '" across countries</p>' +
+        '<div class="route-stats">🔥 ' + streak + ' streak · Best: ' + best + '</div>' +
+        (hasSession ? '<div class="route-resume-hint">Tap to pick up where you left off</div>' : '') +
+        '</div>'
+      );
+    }).join('');
+    showScreen('wordPick');
   }
 
   function showRoutePicker(mode) {
     pendingMode = mode;
-    document.getElementById('route-mode-title').textContent = MODE_LABELS[mode];
+    updateRoutePickerHeader(mode);
     updateRoutePickerStats(mode);
     showScreen('route');
   }
 
+  function updateRoutePickerHeader(mode) {
+    var title = MODE_LABELS[mode];
+    var subtitle = 'Choose how countries are picked';
+    if (mode === 'words') {
+      if (pendingWordsStyle === 'fixed' && pendingFixedWordKey) {
+        title = WORD_LABELS[pendingFixedWordKey];
+        subtitle = 'Choose random or ordered countries';
+      } else if (pendingWordsStyle === 'randomWords') {
+        title = 'Random words';
+        subtitle = 'Choose how countries are picked';
+      }
+    }
+    document.getElementById('route-mode-title').textContent = title;
+    document.getElementById('route-picker-subtitle').textContent = subtitle;
+  }
+
   function updateRoutePickerStats(mode) {
-    var bundle = player.modes[mode];
+    var bundle;
+    if (mode === 'words') {
+      bundle = getWordsBundle(pendingWordsStyle, pendingFixedWordKey);
+    } else {
+      bundle = player.modes[mode];
+    }
     ['random', 'ordered'].forEach(function (route) {
       var stats = bundle[route];
       document.getElementById('route-stats-' + route).textContent =
@@ -2171,8 +2407,12 @@
     savePlayer();
     currentMode = null;
     currentRoute = null;
+    currentWordsStyle = null;
+    currentFixedWordKey = null;
     gameState = null;
     pendingMode = null;
+    pendingWordsStyle = null;
+    pendingFixedWordKey = null;
     updateHomeStats();
     showScreen('home');
   }
@@ -2181,6 +2421,8 @@
   var screens = {
     name: document.getElementById('screen-name'),
     home: document.getElementById('screen-home'),
+    wordsStyle: document.getElementById('screen-words-style'),
+    wordPick: document.getElementById('screen-word-pick'),
     route: document.getElementById('screen-route'),
     game: document.getElementById('screen-game'),
     feedback: document.getElementById('screen-feedback'),
@@ -2289,7 +2531,11 @@
   var player = defaultPlayer();
   var currentMode = null;
   var currentRoute = null;
+  var currentWordsStyle = null;
+  var currentFixedWordKey = null;
   var pendingMode = null;
+  var pendingWordsStyle = null;
+  var pendingFixedWordKey = null;
   var gameState = null;
   var inputLocked = false;
   var feedbackActive = false;
@@ -2307,11 +2553,27 @@
   function computeHash() {
     if (screens.name.classList.contains('active')) return '#/name';
     if (screens.home.classList.contains('active')) return '#/home';
+    if (screens.wordsStyle.classList.contains('active')) return '#/words';
+    if (screens.wordPick.classList.contains('active')) return '#/words/fixed';
     if (screens.route.classList.contains('active')) {
+      if (pendingMode === 'words') {
+        if (pendingWordsStyle === 'randomWords') return '#/words/random';
+        if (pendingWordsStyle === 'fixed' && pendingFixedWordKey) {
+          return '#/words/fixed/' + pendingFixedWordKey;
+        }
+      }
       return pendingMode ? '#/route/' + pendingMode : '#/home';
     }
     if (currentMode && currentRoute &&
         (screens.game.classList.contains('active') || screens.streakEnd.classList.contains('active'))) {
+      if (currentMode === 'words') {
+        if (currentWordsStyle === 'randomWords') {
+          return '#/game/words/random/' + currentRoute;
+        }
+        if (currentWordsStyle === 'fixed' && currentFixedWordKey) {
+          return '#/game/words/fixed/' + currentFixedWordKey + '/' + currentRoute;
+        }
+      }
       return '#/game/' + currentMode + '/' + currentRoute;
     }
     return '#/home';
@@ -2330,7 +2592,55 @@
     var parts = raw ? raw.split('/') : [];
     if (parts.length === 0 || parts[0] === 'home') return { page: 'home' };
     if (parts[0] === 'name') return { page: 'name' };
+    if (parts[0] === 'words') {
+      if (parts.length === 1) return { page: 'wordsStyle' };
+      if (parts[1] === 'random' && parts.length === 2) {
+        return { page: 'route', mode: 'words', wordsStyle: 'randomWords' };
+      }
+      if (parts[1] === 'fixed') {
+        if (parts.length === 2) return { page: 'wordPick' };
+        if (parts.length === 3 && WORD_KEYS.indexOf(parts[2]) !== -1) {
+          return {
+            page: 'route',
+            mode: 'words',
+            wordsStyle: 'fixed',
+            wordKey: parts[2]
+          };
+        }
+      }
+    }
+    if (parts[0] === 'route' && parts[1] === 'words') {
+      return { page: 'wordsStyle' };
+    }
     if (parts[0] === 'route' && parts[1]) return { page: 'route', mode: parts[1] };
+    if (parts[0] === 'game' && parts[1] === 'words') {
+      if (parts.length === 3 && VALID_ROUTES.indexOf(parts[2]) !== -1) {
+        return {
+          page: 'game',
+          mode: 'words',
+          wordsStyle: 'randomWords',
+          route: parts[2]
+        };
+      }
+      if (parts[2] === 'random' && parts[3] && VALID_ROUTES.indexOf(parts[3]) !== -1) {
+        return {
+          page: 'game',
+          mode: 'words',
+          wordsStyle: 'randomWords',
+          route: parts[3]
+        };
+      }
+      if (parts[2] === 'fixed' && parts[3] && WORD_KEYS.indexOf(parts[3]) !== -1 &&
+          parts[4] && VALID_ROUTES.indexOf(parts[4]) !== -1) {
+        return {
+          page: 'game',
+          mode: 'words',
+          wordsStyle: 'fixed',
+          wordKey: parts[3],
+          route: parts[4]
+        };
+      }
+    }
     if (parts[0] === 'game' && parts[1] && parts[2]) {
       return { page: 'game', mode: parts[1], route: parts[2] };
     }
@@ -2357,11 +2667,21 @@
     inputLocked = false;
     currentMode = null;
     currentRoute = null;
+    currentWordsStyle = null;
+    currentFixedWordKey = null;
     gameState = null;
   }
 
-  function enterModeFromUrl(mode, route) {
-    if (!resumeMode(mode, route)) enterMode(mode, route);
+  function enterModeFromUrl(parsed) {
+    if (parsed.mode === 'words') {
+      if (!resumeMode(parsed.mode, parsed.route, parsed.wordsStyle, parsed.wordKey)) {
+        enterMode(parsed.mode, parsed.route, false, parsed.wordsStyle, parsed.wordKey);
+      }
+      return;
+    }
+    if (!resumeMode(parsed.mode, parsed.route, null, null)) {
+      enterMode(parsed.mode, parsed.route, false, null, null);
+    }
   }
 
   function applyRouteFromUrl(replace) {
@@ -2384,17 +2704,35 @@
       nameSubmit.disabled = player.name.length === 0;
       leaveGameView();
       pendingMode = null;
+      pendingWordsStyle = null;
+      pendingFixedWordKey = null;
       showScreen('name');
+    } else if (parsed.page === 'wordsStyle') {
+      leaveGameView();
+      showWordsStylePicker();
+    } else if (parsed.page === 'wordPick') {
+      leaveGameView();
+      showWordPicker();
+    } else if (parsed.page === 'route' && parsed.mode === 'words') {
+      leaveGameView();
+      pendingMode = 'words';
+      pendingWordsStyle = parsed.wordsStyle;
+      pendingFixedWordKey = parsed.wordKey || null;
+      showRoutePicker('words');
     } else if (parsed.page === 'route' && VALID_MODES.indexOf(parsed.mode) !== -1) {
       leaveGameView();
+      pendingWordsStyle = null;
+      pendingFixedWordKey = null;
       showRoutePicker(parsed.mode);
     } else if (parsed.page === 'game' &&
                VALID_MODES.indexOf(parsed.mode) !== -1 &&
                VALID_ROUTES.indexOf(parsed.route) !== -1) {
-      enterModeFromUrl(parsed.mode, parsed.route);
+      enterModeFromUrl(parsed);
     } else {
       leaveGameView();
       pendingMode = null;
+      pendingWordsStyle = null;
+      pendingFixedWordKey = null;
       updateHomeStats();
       showScreen('home');
     }
@@ -2413,7 +2751,7 @@
 
   function updateHomeStats() {
     homePlayerName.textContent = player.name;
-    ['flags', 'capitals', 'words'].forEach(function (mode) {
+    ['flags', 'capitals'].forEach(function (mode) {
       var bundle = player.modes[mode];
       var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
       var statsEl = document.getElementById('stats-' + mode);
@@ -2429,6 +2767,20 @@
         resumeEl.textContent = hasSession ? 'Tap to pick up where you left off' : '';
       }
     });
+    var wordsBundle = player.modes.words;
+    var wordsCard = document.querySelector('.mode-card[data-mode="words"]');
+    var wordsStatsEl = document.getElementById('stats-words');
+    var wordsResumeEl = wordsCard ? wordsCard.querySelector('.mode-resume-hint') : null;
+    var wordsHasSession = wordsModeHasSession();
+    wordsStatsEl.textContent =
+      'Random words 🔥 ' + maxWordsStreak(wordsBundle.randomWords) +
+      ' · Choose word 🔥 ' + maxFixedWordsStreak();
+    if (wordsCard) {
+      wordsCard.classList.toggle('has-progress', wordsHasSession);
+    }
+    if (wordsResumeEl) {
+      wordsResumeEl.textContent = wordsHasSession ? 'Tap to pick up where you left off' : '';
+    }
   }
 
   function updateStreakUI(streak, bestStreak, animate) {
@@ -2507,17 +2859,36 @@
     var deterministic = route === 'ordered';
 
     if (route === 'ordered') {
-      var plan = ORDERED_PLANS[mode];
+      var plan;
+      if (mode === 'words') {
+        if (currentWordsStyle === 'fixed' && currentFixedWordKey) {
+          plan = ORDERED_COUNTRIES.map(function (country) {
+            return { country: country, wordKey: currentFixedWordKey };
+          });
+        } else {
+          plan = ORDERED_PLANS.flags;
+        }
+      } else {
+        plan = ORDERED_PLANS[mode];
+      }
       var step = plan[questionIndex % plan.length];
       country = step.country;
-      wordKey = mode === 'words' ? step.wordKey : WORD_KEYS[0];
+      if (mode === 'words') {
+        wordKey = step.wordKey || pickRandom(WORD_KEYS);
+      } else {
+        wordKey = WORD_KEYS[0];
+      }
     } else {
       var attempts = 0;
       do {
         country = pickCountryForStreak(streak);
         attempts++;
       } while (state.usedCodes.indexOf(country.code) !== -1 && attempts < 50);
-      wordKey = pickRandom(WORD_KEYS);
+      if (mode === 'words' && currentWordsStyle === 'fixed' && currentFixedWordKey) {
+        wordKey = currentFixedWordKey;
+      } else {
+        wordKey = pickRandom(WORD_KEYS);
+      }
     }
 
     var correct = getAnswerText(country, mode, wordKey);
@@ -3095,20 +3466,78 @@
   // --- Home mode cards ---
   document.querySelectorAll('.mode-card').forEach(function (card) {
     card.addEventListener('click', function () {
-      showRoutePicker(card.getAttribute('data-mode'));
+      var mode = card.getAttribute('data-mode');
+      if (mode === 'words') showWordsStylePicker();
+      else showRoutePicker(mode);
     });
   });
 
-  document.getElementById('route-back').addEventListener('click', function () {
+  document.getElementById('words-style-back').addEventListener('click', function () {
     pendingMode = null;
+    pendingWordsStyle = null;
+    pendingFixedWordKey = null;
     showScreen('home');
   });
 
-  document.querySelectorAll('.route-card').forEach(function (card) {
+  document.querySelectorAll('[data-words-style]').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var style = card.getAttribute('data-words-style');
+      pendingMode = 'words';
+      pendingWordsStyle = style;
+      if (style === 'fixed') showWordPicker();
+      else showRoutePicker('words');
+    });
+  });
+
+  document.getElementById('word-pick-back').addEventListener('click', function () {
+    pendingFixedWordKey = null;
+    showWordsStylePicker();
+  });
+
+  document.getElementById('word-pick-grid').addEventListener('click', function (e) {
+    var card = e.target.closest('.word-pick-card');
+    if (!card) return;
+    pendingMode = 'words';
+    pendingWordsStyle = 'fixed';
+    pendingFixedWordKey = card.getAttribute('data-word-key');
+    showRoutePicker('words');
+  });
+
+  document.getElementById('route-back').addEventListener('click', function () {
+    if (pendingMode === 'words') {
+      if (pendingWordsStyle === 'fixed' && pendingFixedWordKey) {
+        pendingFixedWordKey = null;
+        showWordPicker();
+        return;
+      }
+      if (pendingWordsStyle === 'randomWords') {
+        pendingWordsStyle = null;
+        showWordsStylePicker();
+        return;
+      }
+      if (pendingWordsStyle === 'fixed') {
+        pendingWordsStyle = null;
+        showWordsStylePicker();
+        return;
+      }
+      showWordsStylePicker();
+      return;
+    }
+    pendingMode = null;
+    pendingWordsStyle = null;
+    pendingFixedWordKey = null;
+    showScreen('home');
+  });
+
+  document.querySelectorAll('.route-card[data-route]').forEach(function (card) {
     card.addEventListener('click', function () {
       if (!pendingMode) return;
       var route = card.getAttribute('data-route');
-      enterMode(pendingMode, route, route === 'ordered');
+      if (pendingMode === 'words') {
+        enterMode('words', route, route === 'ordered', pendingWordsStyle, pendingFixedWordKey);
+      } else {
+        enterMode(pendingMode, route, route === 'ordered', null, null);
+      }
     });
   });
 
