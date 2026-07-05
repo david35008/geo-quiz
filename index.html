@@ -446,18 +446,55 @@
       min-height: 0;
       display: grid;
       touch-action: none;
+      grid-template-columns: minmax(22px, 7vw) minmax(56px, 15vw) 1fr minmax(56px, 15vw) minmax(22px, 7vw);
       grid-template-rows: auto minmax(72px, 1fr) auto;
-      grid-template-columns: minmax(52px, 16vw) 1fr minmax(52px, 16vw);
-      grid-template-areas:
-        ". up ."
-        "left flag right"
-        ". down .";
       gap: 6px;
       padding: 6px 8px 8px;
       position: relative;
-      align-items: stretch;
+      align-items: center;
       justify-items: center;
     }
+
+    .side-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+      justify-self: stretch;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 0.03em;
+      padding: 8px 2px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: clamp(0.72rem, 2.4vw, 0.88rem);
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s, color 0.15s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 0;
+    }
+
+    .side-label:hover { background: var(--surface-hover); color: var(--text); }
+    .side-label.highlight {
+      border-color: var(--primary);
+      box-shadow: 0 0 16px rgba(79, 195, 247, 0.4);
+      color: var(--text);
+      transform: scale(1.03);
+    }
+
+    .side-label-left { grid-column: 1; grid-row: 2; }
+    .side-label-right { grid-column: 5; grid-row: 2; }
+
+    #opt-up { grid-column: 2 / 5; grid-row: 1; writing-mode: horizontal-tb; }
+    #opt-left { grid-column: 2; grid-row: 2; align-self: center; writing-mode: horizontal-tb; }
+    #game-flag { grid-column: 3; grid-row: 2; }
+    #opt-right { grid-column: 4; grid-row: 2; align-self: center; writing-mode: horizontal-tb; }
+    #opt-down { grid-column: 2 / 5; grid-row: 3; writing-mode: horizontal-tb; width: 100%; }
 
     /* Phone: sit flag + answers in the lower thumb zone */
     @media (max-width: 640px) {
@@ -480,18 +517,24 @@
       }
 
       .game-area {
-        grid-template-columns: minmax(44px, 14vw) 1fr minmax(44px, 14vw);
+        grid-template-columns: minmax(20px, 6vw) minmax(48px, 14vw) 1fr minmax(48px, 14vw) minmax(20px, 6vw);
         grid-template-rows: auto minmax(88px, 1fr) auto;
         padding: 4px 8px 12px;
         gap: 6px;
       }
 
+      .side-label {
+        font-size: clamp(0.68rem, 2.2vw, 0.82rem);
+        padding: 6px 1px;
+      }
+
       .dir-left,
       .dir-right {
         max-width: 100%;
-        font-size: clamp(0.78rem, 2.6vw, 0.95rem);
-        min-height: 0;
-        padding: 8px 2px;
+        font-size: clamp(0.82rem, 3.2vw, 1.05rem);
+        min-height: 44px;
+        padding: 6px 4px;
+        height: auto;
       }
 
       .dir-up {
@@ -501,7 +544,8 @@
 
       .dir-down {
         max-width: min(100%, 280px);
-        min-height: 52px;
+        min-height: 44px;
+        height: auto;
       }
 
       .flag-center {
@@ -534,30 +578,6 @@
       overflow-wrap: anywhere;
       hyphens: none;
       width: 100%;
-      height: 100%;
-    }
-
-    .dir-left,
-    .dir-right,
-    .dir-down {
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      letter-spacing: 0.03em;
-    }
-
-    .dir-left,
-    .dir-right {
-      align-self: stretch;
-      justify-self: stretch;
-      min-height: 0;
-      padding: 10px 4px;
-      font-size: clamp(0.82rem, 2.8vw, 1.05rem);
-    }
-
-    .dir-down {
-      min-height: 52px;
-      padding: 10px 8px;
-      font-size: clamp(0.9rem, 3.2vw, 1.15rem);
     }
 
     .dir-option:hover { background: var(--surface-hover); }
@@ -567,13 +587,12 @@
       transform: scale(1.05);
     }
 
-    .dir-up    { grid-area: up; max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); writing-mode: horizontal-tb; }
-    .dir-down  { grid-area: down; max-width: min(100%, 420px); }
-    .dir-left  { grid-area: left; max-width: min(100%, 108px); }
-    .dir-right { grid-area: right; max-width: min(100%, 108px); }
+    .dir-up    { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
+    .dir-down  { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
+    .dir-left  { max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
+    .dir-right { max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
 
     .flag-center {
-      grid-area: flag;
       align-self: center;
       justify-self: center;
       width: 100%;
@@ -600,7 +619,8 @@
       cursor: grabbing;
     }
 
-    .game-area.is-dragging .dir-option {
+    .game-area.is-dragging .dir-option,
+    .game-area.is-dragging .side-label {
       pointer-events: none;
     }
 
@@ -1072,6 +1092,8 @@
         <div class="streak-history" id="streak-history"></div>
       </div>
       <div class="game-area" id="game-area">
+        <div class="side-label side-label-left" id="side-label-left" data-dir="left"></div>
+        <div class="side-label side-label-right" id="side-label-right" data-dir="right"></div>
         <div class="dir-option dir-up"    data-dir="up"    id="opt-up"></div>
         <div class="dir-option dir-left"  data-dir="left"  id="opt-left"></div>
         <div class="flag-center" id="game-flag"></div>
@@ -1766,6 +1788,10 @@
     left: document.getElementById('opt-left'),
     right: document.getElementById('opt-right')
   };
+  var sideLabelEls = {
+    left: document.getElementById('side-label-left'),
+    right: document.getElementById('side-label-right')
+  };
 
   // --- State ---
   var player = defaultPlayer();
@@ -1915,6 +1941,10 @@
       dirEls[dir].textContent = q.mapping[dir];
       dirEls[dir].classList.remove('highlight');
     });
+    sideLabelEls.left.textContent = q.mapping.left;
+    sideLabelEls.right.textContent = q.mapping.right;
+    sideLabelEls.left.classList.remove('highlight');
+    sideLabelEls.right.classList.remove('highlight');
     resetFlagPosition();
   }
 
@@ -2162,7 +2192,13 @@
 
   function highlightDirection(dir) {
     DIRECTIONS.forEach(function (d) { dirEls[d].classList.remove('highlight'); });
-    if (dir) dirEls[dir].classList.add('highlight');
+    sideLabelEls.left.classList.remove('highlight');
+    sideLabelEls.right.classList.remove('highlight');
+    if (dir) {
+      dirEls[dir].classList.add('highlight');
+      if (dir === 'left') sideLabelEls.left.classList.add('highlight');
+      if (dir === 'right') sideLabelEls.right.classList.add('highlight');
+    }
   }
 
   function isFlagTarget(target) {
@@ -2252,6 +2288,12 @@
 
   DIRECTIONS.forEach(function (dir) {
     dirEls[dir].addEventListener('click', function () {
+      handleAnswer(dir);
+    });
+  });
+
+  ['left', 'right'].forEach(function (dir) {
+    sideLabelEls[dir].addEventListener('click', function () {
       handleAnswer(dir);
     });
   });
