@@ -1409,7 +1409,18 @@
 
     .streak-end-actions {
       flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
+
+    .btn-whatsapp {
+      background: #25D366;
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-whatsapp:hover:not(:disabled) { background: #20bd5a; }
   </style>
 </head>
 <body>
@@ -1600,7 +1611,8 @@
         <div class="streak-end-list" id="streak-end-list"></div>
       </div>
       <div class="streak-end-actions">
-        <button class="btn btn-primary" id="streak-end-continue" style="width:100%">Play again</button>
+        <button class="btn btn-whatsapp" id="streak-end-share" type="button">Share on WhatsApp</button>
+        <button class="btn btn-primary" id="streak-end-continue" type="button">Play again</button>
       </div>
     </div>
   </section>
@@ -1637,6 +1649,7 @@
   };
   const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
   const ROUTE_LABELS = { random: 'Random', ordered: 'Ordered' };
+  const GAME_SHARE_URL = 'https://david35008.github.io/geo-quiz/';
   const VALID_MODES = ['flags', 'capitals', 'words'];
   const VALID_ROUTES = ['random', 'ordered'];
   const DIRECTIONS = ['up', 'down', 'left', 'right'];
@@ -2453,6 +2466,7 @@
   var streakEndChosen = document.getElementById('streak-end-chosen');
   var streakEndCorrect = document.getElementById('streak-end-correct');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
+  var btnStreakEndShare = document.getElementById('streak-end-share');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
   var gameStreakEl = document.getElementById('game-streak');
@@ -2549,6 +2563,7 @@
   var celebrationTimer = null;
   var skipUrlSync = false;
   var applyingRoute = false;
+  var lastStreakEndSummary = null;
 
   function computeHash() {
     if (screens.name.classList.contains('active')) return '#/name';
@@ -3088,7 +3103,79 @@
     }
   }
 
+  function buildGameCriteriaLines(mode, route, wordsStyle, wordKey) {
+    var lines = ['Mode: ' + MODE_LABELS[mode]];
+    if (mode === 'words') {
+      if (wordsStyle === 'fixed' && wordKey) {
+        lines.push('Words: Choose a word (' + WORD_LABELS[wordKey] + ')');
+      } else {
+        lines.push('Words: Random');
+      }
+    }
+    lines.push('Countries: ' + ROUTE_LABELS[route]);
+    return lines;
+  }
+
+  function getGameShareUrl() {
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      return location.href.split('#')[0];
+    }
+    return GAME_SHARE_URL;
+  }
+
+  function buildStreakShareMessage(summary) {
+    if (!summary || !currentMode || !currentRoute) return '';
+    var lines = ['🌍 Geo Quiz — Streak result', ''];
+    if (player.name) {
+      lines.push('Player: ' + player.name);
+    }
+    lines.push('📋 Game setup');
+    buildGameCriteriaLines(currentMode, currentRoute, currentWordsStyle, currentFixedWordKey)
+      .forEach(function (line) {
+        lines.push('• ' + line);
+      });
+    lines.push('');
+    lines.push('🔥 ' + summary.lostStreak + ' correct in a row');
+    lines.push('🏅 Best: ' + summary.bestStreak);
+    if (summary.successes.length > 0) {
+      lines.push('');
+      lines.push('✅ Your streak:');
+      summary.successes.forEach(function (entry, i) {
+        lines.push(
+          (i + 1) + '. ' + flagEmoji(entry.code) + ' ' + entry.name +
+          ' — ' + formatSuccessAnswer(entry, currentMode)
+        );
+      });
+    }
+    if (summary.chosen && summary.correct) {
+      lines.push('');
+      lines.push('❌ Last question');
+      lines.push('You picked: ' + summary.chosen);
+      lines.push('Correct: ' + summary.correct);
+    }
+    lines.push('');
+    lines.push('Play Geo Quiz: ' + getGameShareUrl());
+    return lines.join('\n');
+  }
+
+  function shareStreakOnWhatsApp() {
+    var text = buildStreakShareMessage(lastStreakEndSummary);
+    if (!text) return;
+    window.open(
+      'https://wa.me/?text=' + encodeURIComponent(text),
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
   function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct, skipSave) {
+    lastStreakEndSummary = {
+      lostStreak: lostStreak,
+      bestStreak: bestStreak,
+      successes: successes.slice(),
+      chosen: chosen,
+      correct: correct
+    };
     document.getElementById('streak-end-count').textContent = lostStreak;
     document.getElementById('streak-end-best').textContent = bestStreak;
     renderSuccessList(successes);
@@ -3408,6 +3495,7 @@
   }
 
   btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
+  btnStreakEndShare.addEventListener('click', shareStreakOnWhatsApp);
 
   btnGameHome.addEventListener('click', goHome);
   btnStreakEndHome.addEventListener('click', goHome);
