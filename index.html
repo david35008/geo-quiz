@@ -494,6 +494,139 @@
       font-size: 1rem;
       margin-top: 8px;
     }
+
+    /* Streak ended summary */
+    #screen-streak-end {
+      padding: 20px 16px;
+      background: linear-gradient(160deg, #0f1419 0%, #1a2332 100%);
+      overflow: hidden;
+    }
+
+    .streak-end-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      text-align: center;
+    }
+
+    .streak-end-header {
+      flex-shrink: 0;
+      padding-bottom: 16px;
+    }
+
+    .streak-end-label {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .streak-end-count {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--primary);
+    }
+
+    .streak-end-sublabel {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+
+    .streak-end-best {
+      color: var(--accent);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    .streak-end-list-wrap {
+      flex: 1;
+      min-height: 0;
+      margin: 16px 0;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .streak-end-list-title {
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #2a3a4a;
+      flex-shrink: 0;
+    }
+
+    .streak-end-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 0;
+    }
+
+    .streak-end-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #243044;
+    }
+
+    .streak-end-item:last-child { border-bottom: none; }
+
+    .streak-end-item .item-num {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      min-width: 1.4rem;
+      text-align: right;
+    }
+
+    .streak-end-item .item-flag {
+      font-size: 1.6rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .streak-end-item .item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .streak-end-item .item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .streak-end-item .item-answer {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 2px;
+      word-break: normal;
+      overflow-wrap: normal;
+    }
+
+    .streak-end-miss {
+      flex-shrink: 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .streak-end-miss strong { color: var(--wrong); }
+
+    .streak-end-actions {
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -579,6 +712,26 @@
       <p class="celebration-sub" id="celebration-message"></p>
       <p class="celebration-best" id="celebration-best"></p>
       <p class="feedback-continue">Tap to continue</p>
+    </div>
+  </section>
+
+  <!-- Streak ended summary -->
+  <section id="screen-streak-end" class="screen">
+    <div class="streak-end-card">
+      <div class="streak-end-header">
+        <p class="streak-end-label">Streak ended</p>
+        <div class="streak-end-count" id="streak-end-count">0</div>
+        <p class="streak-end-sublabel">correct in a row</p>
+        <p class="streak-end-best">🏅 Best: <span id="streak-end-best">0</span></p>
+      </div>
+      <div class="streak-end-list-wrap">
+        <div class="streak-end-list-title">Your streak</div>
+        <div class="streak-end-list" id="streak-end-list"></div>
+      </div>
+      <p class="streak-end-miss" id="streak-end-miss"></p>
+      <div class="streak-end-actions">
+        <button class="btn btn-primary" id="streak-end-continue" style="width:100%">Keep playing</button>
+      </div>
     </div>
   </section>
 
@@ -833,12 +986,22 @@
   }
 
   function defaultModeStats() {
-    return { currentStreak: 0, bestStreak: 0, questionsAnswered: 0, correctCount: 0 };
+    return { currentStreak: 0, bestStreak: 0, runSuccesses: [], questionsAnswered: 0, correctCount: 0 };
   }
 
   function migrateModeStats(raw) {
-    if (raw && raw.currentStreak !== undefined) return raw;
-    return defaultModeStats();
+    if (!raw) return defaultModeStats();
+    if (raw.currentStreak === undefined) return defaultModeStats();
+    if (!raw.runSuccesses) raw.runSuccesses = [];
+    return raw;
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function defaultPlayer() {
@@ -892,7 +1055,8 @@
     home: document.getElementById('screen-home'),
     game: document.getElementById('screen-game'),
     feedback: document.getElementById('screen-feedback'),
-    celebration: document.getElementById('screen-celebration')
+    celebration: document.getElementById('screen-celebration'),
+    streakEnd: document.getElementById('screen-streak-end')
   };
 
   var nameInput = document.getElementById('name-input');
@@ -914,8 +1078,45 @@
   var celebrationTitle = document.getElementById('celebration-title');
   var celebrationMessage = document.getElementById('celebration-message');
   var celebrationBest = document.getElementById('celebration-best');
+  var streakEndList = document.getElementById('streak-end-list');
+  var streakEndMiss = document.getElementById('streak-end-miss');
+  var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
+
+  function makeSuccessEntry(q) {
+    return {
+      code: q.country.code,
+      name: q.country.name,
+      answer: q.correct,
+      wordKey: q.wordKey
+    };
+  }
+
+  function formatSuccessAnswer(entry) {
+    if (currentMode === 'flags') return 'Correct';
+    if (currentMode === 'capitals') return entry.answer;
+    return entry.answer + ' · ' + WORD_LABELS[entry.wordKey];
+  }
+
+  function renderSuccessList(successes) {
+    if (successes.length === 0) {
+      streakEndList.innerHTML = '<p style="padding:16px;color:var(--text-muted)">No correct answers this streak.</p>';
+      return;
+    }
+    streakEndList.innerHTML = successes.map(function (entry, i) {
+      return (
+        '<div class="streak-end-item">' +
+          '<span class="item-num">' + (i + 1) + '</span>' +
+          '<span class="item-flag">' + flagEmoji(entry.code) + '</span>' +
+          '<div class="item-body">' +
+            '<div class="item-name">' + escapeHtml(entry.name) + '</div>' +
+            '<div class="item-answer">' + escapeHtml(formatSuccessAnswer(entry)) + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
 
   var dirEls = {
     up: document.getElementById('opt-up'),
@@ -1091,6 +1292,7 @@
     modeStats.questionsAnswered++;
     if (isCorrect) {
       modeStats.correctCount++;
+      modeStats.runSuccesses.push(makeSuccessEntry(q));
       modeStats.currentStreak++;
       if (modeStats.currentStreak > modeStats.bestStreak) {
         modeStats.bestStreak = modeStats.currentStreak;
@@ -1101,14 +1303,21 @@
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
         showCelebration(modeStats.currentStreak);
       } else {
-        showFeedback(true, chosen, q.correct, modeStats.currentStreak);
+        showFeedback(true, q.correct, modeStats.currentStreak);
       }
     } else {
       var lostStreak = modeStats.currentStreak;
+      var successes = modeStats.runSuccesses.slice();
       modeStats.currentStreak = 0;
+      modeStats.runSuccesses = [];
       savePlayer();
       updateStreakUI(0, modeStats.bestStreak, false);
-      showFeedback(false, chosen, q.correct, lostStreak);
+      if (lostStreak === 0 && successes.length === 0) {
+        inputLocked = false;
+        nextQuestion();
+        return;
+      }
+      showStreakEndSummary(lostStreak, modeStats.bestStreak, successes, chosen, q.correct);
     }
   }
 
@@ -1119,32 +1328,36 @@
     }
   }
 
-  function showFeedback(isCorrect, chosen, correct, streakInfo) {
-    feedbackScreen.className = 'screen active ' + (isCorrect ? 'correct' : 'wrong');
-    feedbackTitle.textContent = isCorrect ? 'Correct!' : 'Wrong';
-    if (isCorrect) {
-      feedbackDetail.innerHTML =
-        '<p>' + correct + '</p><p>🔥 Streak: ' + streakInfo + '</p>';
-    } else {
-      var lostHtml = streakInfo > 0
-        ? '<p>Streak lost! Was at <strong>' + streakInfo + '</strong></p>'
-        : '';
-      feedbackDetail.innerHTML =
-        lostHtml +
-        '<p>You chose: <strong>' + chosen + '</strong></p>' +
-        '<p>Correct answer: <strong>' + correct + '</strong></p>';
-    }
+  function showFeedback(isCorrect, correct, streakInfo) {
+    feedbackScreen.className = 'screen active correct';
+    feedbackTitle.textContent = 'Correct!';
+    feedbackDetail.innerHTML =
+      '<p>' + escapeHtml(correct) + '</p><p>🔥 Streak: ' + streakInfo + '</p>';
 
-    var autoDismissMs = isCorrect ? FEEDBACK_AUTO_DISMISS_CORRECT_MS : FEEDBACK_AUTO_DISMISS_WRONG_MS;
-    feedbackContinue.textContent = isCorrect ? '' : 'Tap to continue';
-    feedbackTimer.textContent = isCorrect ? '' : 'Next question in ' + (autoDismissMs / 1000).toFixed(1) + 's';
+    feedbackContinue.textContent = '';
+    feedbackTimer.textContent = '';
 
     clearFeedbackTimers();
     feedbackActive = true;
 
     feedbackAutoDismissTimer = setTimeout(function () {
       dismissFeedback();
-    }, autoDismissMs);
+    }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
+  }
+
+  function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct) {
+    document.getElementById('streak-end-count').textContent = lostStreak;
+    document.getElementById('streak-end-best').textContent = bestStreak;
+    renderSuccessList(successes);
+    streakEndMiss.innerHTML =
+      'Missed: <strong>' + escapeHtml(chosen) + '</strong> · Correct: <strong>' +
+      escapeHtml(correct) + '</strong>';
+    showScreen('streakEnd');
+  }
+
+  function dismissStreakEndSummary() {
+    showScreen('game');
+    nextQuestion();
   }
 
   function dismissFeedback() {
@@ -1319,6 +1532,8 @@
       handleAnswer(dir);
     });
   });
+
+  btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
 
   feedbackScreen.addEventListener('click', dismissFeedback);
   feedbackScreen.addEventListener('touchend', function (e) {
