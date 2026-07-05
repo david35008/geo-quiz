@@ -804,14 +804,6 @@
       border-color: var(--primary);
     }
 
-    .mode-resume-hint {
-      margin-top: 4px;
-      font-size: clamp(0.68rem, 2vw, 0.75rem);
-      color: var(--primary);
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
     /* Route picker */
     #screen-route,
     #screen-words-style,
@@ -1753,23 +1745,17 @@
           <span class="mode-flag">🇯🇵</span>
         </div>
         <h2>Flags</h2>
-        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-flags"></div>
-        <div class="mode-resume-hint"></div>
       </div>
       <div class="mode-card" data-mode="capitals">
         <div class="mode-icon">🏛️</div>
         <h2>Capitals</h2>
-        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-capitals"></div>
-        <div class="mode-resume-hint"></div>
       </div>
       <div class="mode-card" data-mode="words">
         <div class="mode-icon">💬</div>
         <h2>Words</h2>
-        <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-words"></div>
-        <div class="mode-resume-hint"></div>
       </div>
     </div>
     <p class="storage-warning" id="storage-warning">Progress cannot be saved (localStorage unavailable).</p>
@@ -3184,7 +3170,6 @@
       var bundle = player.modes[mode];
       var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
       var statsEl = document.getElementById('stats-' + mode);
-      var resumeEl = card ? card.querySelector('.mode-resume-hint') : null;
       var hasSession = !!bundle.random.session;
       statsEl.textContent =
         'Random ' + formatHomeRouteStats(bundle.random) +
@@ -3192,14 +3177,10 @@
       if (card) {
         card.classList.toggle('has-progress', hasSession);
       }
-      if (resumeEl) {
-        resumeEl.textContent = hasSession ? 'Tap to pick up where you left off' : '';
-      }
     });
     var wordsBundle = player.modes.words;
     var wordsCard = document.querySelector('.mode-card[data-mode="words"]');
     var wordsStatsEl = document.getElementById('stats-words');
-    var wordsResumeEl = wordsCard ? wordsCard.querySelector('.mode-resume-hint') : null;
     var wordsHasSession = wordsModeHasSession();
     var randomWordsCurrent = maxWordsStreak(wordsBundle.randomWords);
     var randomWordsBest = maxWordsBestStreak(wordsBundle.randomWords);
@@ -3212,9 +3193,6 @@
     wordsStatsEl.textContent = 'Random words ' + randomWordsLine + ' · Choose word ' + fixedWordsLine;
     if (wordsCard) {
       wordsCard.classList.toggle('has-progress', wordsHasSession);
-    }
-    if (wordsResumeEl) {
-      wordsResumeEl.textContent = wordsHasSession ? 'Tap to pick up where you left off' : '';
     }
   }
 
