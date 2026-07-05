@@ -224,6 +224,29 @@
 
     .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
 
+    .btn-home {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .btn-home:active { opacity: 0.7; }
+
+    .mode-card.has-progress {
+      border-color: var(--primary);
+    }
+
+    .mode-resume-hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
     .progress-bar {
       height: 4px;
       background: #2a3a4a;
@@ -566,6 +589,11 @@
       text-align: center;
     }
 
+    .streak-end-home {
+      align-self: flex-start;
+      padding: 16px 16px 0;
+    }
+
     .streak-end-header {
       flex-shrink: 0;
       padding-bottom: 16px;
@@ -709,18 +737,21 @@
         <h2>Flags</h2>
         <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-flags"></div>
+        <div class="mode-resume-hint"></div>
       </div>
       <div class="mode-card" data-mode="capitals">
         <div class="mode-icon">🏛️</div>
         <h2>Capitals</h2>
         <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-capitals"></div>
+        <div class="mode-resume-hint"></div>
       </div>
       <div class="mode-card" data-mode="words">
         <div class="mode-icon">💬</div>
         <h2>Words</h2>
         <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-words"></div>
+        <div class="mode-resume-hint"></div>
       </div>
     </div>
   </section>
@@ -729,11 +760,11 @@
   <section id="screen-game" class="screen">
     <div class="game-header">
       <div class="game-header-row">
-        <span id="game-mode-label"></span>
+        <button class="btn-home" id="game-home-btn" type="button">← Games</button>
         <span class="streak-display streak-hero">🔥 <span id="game-streak">0</span></span>
       </div>
       <div class="game-header-row">
-        <span></span>
+        <span id="game-mode-label"></span>
         <span class="best-streak-label">🏅 Best: <span id="game-best-streak">0</span></span>
       </div>
       <p class="prompt" id="game-prompt"></p>
@@ -772,6 +803,7 @@
   <!-- Streak ended summary -->
   <section id="screen-streak-end" class="screen">
     <div class="streak-end-card">
+      <button class="btn-home streak-end-home" id="streak-end-home" type="button">← All games</button>
       <div class="streak-end-header">
         <p class="streak-end-label">Streak ended</p>
         <div class="streak-end-count" id="streak-end-count">0</div>
@@ -1031,13 +1063,21 @@
   }
 
   function defaultModeStats() {
-    return { currentStreak: 0, bestStreak: 0, runSuccesses: [], questionsAnswered: 0, correctCount: 0 };
+    return {
+      currentStreak: 0,
+      bestStreak: 0,
+      runSuccesses: [],
+      questionsAnswered: 0,
+      correctCount: 0,
+      session: null
+    };
   }
 
   function migrateModeStats(raw) {
     if (!raw) return defaultModeStats();
     if (raw.currentStreak === undefined) return defaultModeStats();
     if (!raw.runSuccesses) raw.runSuccesses = [];
+    if (raw.session === undefined) raw.session = null;
     return raw;
   }
 
@@ -1055,6 +1095,21 @@
       createdAt: new Date().toISOString(),
       modes: { flags: defaultModeStats(), capitals: defaultModeStats(), words: defaultModeStats() }
     };
+  }
+
+  function migrateLegacySession(data) {
+    if (!data.activeSession || !data.activeSession.mode) return;
+    var legacyMode = data.activeSession.mode;
+    if (data.modes[legacyMode]) {
+      data.modes[legacyMode].session = {
+        screen: data.activeSession.screen || 'game',
+        usedCodes: data.activeSession.usedCodes || [],
+        question: data.activeSession.question || null,
+        pendingNext: !!data.activeSession.pendingNext,
+        streakEnd: data.activeSession.streakEnd || null
+      };
+    }
+    delete data.activeSession;
   }
 
   // --- Storage ---
@@ -1081,6 +1136,7 @@
         if (!data.modes[m]) data.modes[m] = defaultModeStats();
         else data.modes[m] = migrateModeStats(data.modes[m]);
       });
+      migrateLegacySession(data);
       return data;
     } catch (e) {
       return defaultPlayer();
@@ -1092,6 +1148,124 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
     } catch (e) { /* ignore */ }
+  }
+
+  function serializeQuestion(q) {
+    return {
+      countryCode: q.country.code,
+      wordKey: q.wordKey,
+      correct: q.correct,
+      mapping: q.mapping,
+      correctDir: q.correctDir
+    };
+  }
+
+  function deserializeQuestion(data) {
+    if (!data) return null;
+    var country = COUNTRIES.find(function (c) { return c.code === data.countryCode; });
+    if (!country) return null;
+    return {
+      country: country,
+      wordKey: data.wordKey,
+      correct: data.correct,
+      mapping: data.mapping,
+      correctDir: data.correctDir
+    };
+  }
+
+  function saveSession(opts) {
+    opts = opts || {};
+    if (!currentMode || !gameState) return;
+    player.modes[currentMode].session = {
+      screen: opts.screen || 'game',
+      usedCodes: gameState.usedCodes.slice(),
+      question: gameState.currentQuestion ? serializeQuestion(gameState.currentQuestion) : null,
+      pendingNext: !!opts.pendingNext,
+      streakEnd: opts.streakEnd || null
+    };
+    savePlayer();
+  }
+
+  function clearModeSession(mode) {
+    if (!player.modes[mode]) return;
+    player.modes[mode].session = null;
+    savePlayer();
+  }
+
+  function prepareGameScreen(mode) {
+    showScreen('game');
+    document.getElementById('game-mode-label').textContent = MODE_LABELS[mode];
+    var modeStats = player.modes[mode];
+    swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
+    updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
+  }
+
+  function resumeMode(mode) {
+    var session = player.modes[mode].session;
+    if (!session) return false;
+
+    currentMode = mode;
+    gameState = {
+      usedCodes: session.usedCodes ? session.usedCodes.slice() : [],
+      currentQuestion: null,
+      questionStartTime: Date.now()
+    };
+
+    if (session.screen === 'streakEnd' && session.streakEnd) {
+      prepareGameScreen(mode);
+      var se = session.streakEnd;
+      updateStreakUI(0, se.bestStreak, false);
+      showStreakEndSummary(se.lostStreak, se.bestStreak, se.successes, se.chosen, se.correct, true);
+      return true;
+    }
+
+    prepareGameScreen(mode);
+
+    if (session.pendingNext) {
+      nextQuestion();
+      return true;
+    }
+
+    var q = deserializeQuestion(session.question);
+    if (!q) {
+      clearModeSession(mode);
+      currentMode = null;
+      gameState = null;
+      return false;
+    }
+
+    gameState.currentQuestion = q;
+    displayQuestion(q);
+    return true;
+  }
+
+  function enterMode(mode) {
+    if (resumeMode(mode)) return;
+    currentMode = mode;
+    gameState = {
+      usedCodes: [],
+      currentQuestion: null,
+      questionStartTime: 0
+    };
+    prepareGameScreen(mode);
+    nextQuestion();
+  }
+
+  function goHome() {
+    clearFeedbackTimers();
+    feedbackActive = false;
+    if (celebrationActive) {
+      celebrationActive = false;
+      if (celebrationTimer) {
+        clearTimeout(celebrationTimer);
+        celebrationTimer = null;
+      }
+    }
+    savePlayer();
+    currentMode = null;
+    gameState = null;
+    updateHomeStats();
+    showScreen('home');
   }
 
   // --- DOM refs ---
@@ -1128,6 +1302,8 @@
   var streakEndList = document.getElementById('streak-end-list');
   var streakEndMiss = document.getElementById('streak-end-miss');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
+  var btnGameHome = document.getElementById('game-home-btn');
+  var btnStreakEndHome = document.getElementById('streak-end-home');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
 
@@ -1192,8 +1368,16 @@
     homePlayerName.textContent = player.name;
     ['flags', 'capitals', 'words'].forEach(function (mode) {
       var s = player.modes[mode];
-      document.getElementById('stats-' + mode).textContent =
-        '🔥 ' + s.currentStreak + ' streak · Best: ' + s.bestStreak;
+      var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
+      var statsEl = document.getElementById('stats-' + mode);
+      var resumeEl = card ? card.querySelector('.mode-resume-hint') : null;
+      statsEl.textContent = '🔥 ' + s.currentStreak + ' streak · Best: ' + s.bestStreak;
+      if (card) {
+        card.classList.toggle('has-progress', !!s.session);
+      }
+      if (resumeEl) {
+        resumeEl.textContent = s.session ? 'Tap to continue where you left off' : '';
+      }
     });
   }
 
@@ -1281,36 +1465,9 @@
     };
   }
 
-  function startGame(mode) {
-    currentMode = mode;
-    var modeStats = player.modes[mode];
-    gameState = {
-      usedCodes: [],
-      currentQuestion: null,
-      questionStartTime: 0
-    };
-    showScreen('game');
-    document.getElementById('game-mode-label').textContent = MODE_LABELS[mode];
-    swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
-    updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
-    nextQuestion();
-  }
-
-  function nextQuestion() {
-    var modeStats = player.modes[currentMode];
-    gameState.currentQuestion = buildQuestion(
-      currentMode,
-      modeStats.currentStreak,
-      gameState.usedCodes
-    );
-    gameState.usedCodes.push(gameState.currentQuestion.country.code);
-    if (gameState.usedCodes.length > 30) {
-      gameState.usedCodes = gameState.usedCodes.slice(-20);
-    }
-    gameState.questionStartTime = Date.now();
+  function displayQuestion(q) {
     inputLocked = false;
-
-    var q = gameState.currentQuestion;
+    var modeStats = player.modes[currentMode];
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
     document.getElementById('game-flag').textContent = flagEmoji(q.country.code);
 
@@ -1325,6 +1482,22 @@
       dirEls[dir].classList.remove('highlight');
     });
     resetFlagPosition();
+  }
+
+  function nextQuestion() {
+    var modeStats = player.modes[currentMode];
+    gameState.currentQuestion = buildQuestion(
+      currentMode,
+      modeStats.currentStreak,
+      gameState.usedCodes
+    );
+    gameState.usedCodes.push(gameState.currentQuestion.country.code);
+    if (gameState.usedCodes.length > 30) {
+      gameState.usedCodes = gameState.usedCodes.slice(-20);
+    }
+    gameState.questionStartTime = Date.now();
+    displayQuestion(gameState.currentQuestion);
+    saveSession({ screen: 'game', pendingNext: false });
   }
 
   function handleAnswer(dir) {
@@ -1344,7 +1517,7 @@
       if (modeStats.currentStreak > modeStats.bestStreak) {
         modeStats.bestStreak = modeStats.currentStreak;
       }
-      savePlayer();
+      saveSession({ screen: 'game', pendingNext: true });
       updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, true);
 
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
@@ -1392,13 +1565,25 @@
     }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
   }
 
-  function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct) {
+  function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct, skipSave) {
     document.getElementById('streak-end-count').textContent = lostStreak;
     document.getElementById('streak-end-best').textContent = bestStreak;
     renderSuccessList(successes);
     streakEndMiss.innerHTML =
       'Missed: <strong>' + escapeHtml(chosen) + '</strong> · Correct: <strong>' +
       escapeHtml(correct) + '</strong>';
+    if (!skipSave) {
+      saveSession({
+        screen: 'streakEnd',
+        streakEnd: {
+          lostStreak: lostStreak,
+          bestStreak: bestStreak,
+          successes: successes,
+          chosen: chosen,
+          correct: correct
+        }
+      });
+    }
     showScreen('streakEnd');
   }
 
@@ -1592,6 +1777,9 @@
 
   btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
 
+  btnGameHome.addEventListener('click', goHome);
+  btnStreakEndHome.addEventListener('click', goHome);
+
   feedbackScreen.addEventListener('click', dismissFeedback);
   feedbackScreen.addEventListener('touchend', function (e) {
     e.preventDefault();
@@ -1634,7 +1822,7 @@
   // --- Home mode cards ---
   document.querySelectorAll('.mode-card').forEach(function (card) {
     card.addEventListener('click', function () {
-      startGame(card.getAttribute('data-mode'));
+      enterMode(card.getAttribute('data-mode'));
     });
   });
 
