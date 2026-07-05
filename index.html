@@ -668,9 +668,11 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      overflow: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding: 4px 0;
-      touch-action: none;
+      touch-action: pan-y;
       min-height: 0;
     }
 
@@ -2804,6 +2806,11 @@
     }).join('');
   }
 
+  function scrollStreakHistoryToBottom() {
+    if (!streakHistory) return;
+    streakHistory.scrollTop = streakHistory.scrollHeight;
+  }
+
   function renderStreakHistory() {
     if (!streakHistory || !currentMode) return;
     var successes = getRouteStats().runSuccesses;
@@ -2813,6 +2820,7 @@
       return;
     }
     streakHistory.innerHTML = buildSuccessListHtml(successes, currentMode);
+    requestAnimationFrame(scrollStreakHistoryToBottom);
   }
 
   function renderSuccessList(successes) {
