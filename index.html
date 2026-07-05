@@ -808,10 +808,10 @@
       display: grid;
       touch-action: none;
       grid-template-columns: minmax(22px, 7vw) minmax(56px, 15vw) 1fr minmax(56px, 15vw) minmax(22px, 7vw);
-      grid-template-rows: auto auto auto;
-      row-gap: 2px;
+      grid-template-rows: auto auto;
+      row-gap: 4px;
       column-gap: 6px;
-      padding: 8px 8px 14px;
+      padding: 8px 8px 56px;
       position: relative;
       align-content: center;
       align-items: start;
@@ -862,15 +862,16 @@
       width: min(100%, 420px);
     }
     #opt-left { grid-column: 2; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
-    #game-flag { grid-column: 3; grid-row: 2; align-self: start; margin-top: -6px; }
+    #game-flag { grid-column: 3; grid-row: 2; align-self: start; margin-top: 4px; }
     #opt-right { grid-column: 4; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
     #opt-down {
-      grid-column: 1 / -1;
-      grid-row: 3;
+      position: absolute;
+      left: 50%;
+      bottom: max(6px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(calc(100% - 16px), 420px);
       writing-mode: horizontal-tb;
-      width: min(100%, 420px);
-      align-self: start;
-      justify-self: center;
+      z-index: 3;
     }
 
     /* Phone: sit flag + answers in the lower thumb zone */
@@ -895,10 +896,10 @@
 
       .game-area {
         grid-template-columns: minmax(20px, 6vw) minmax(48px, 14vw) 1fr minmax(48px, 14vw) minmax(20px, 6vw);
-        grid-template-rows: auto auto auto;
-        row-gap: 2px;
+        grid-template-rows: auto auto;
+        row-gap: 4px;
         column-gap: 6px;
-        padding: 4px 8px 48px;
+        padding: 4px 8px 56px;
         align-content: center;
         align-items: start;
       }
@@ -908,11 +909,12 @@
       }
 
       #game-flag {
-        margin-top: -10px;
+        margin-top: 6px;
       }
 
       #opt-down {
-        width: min(100%, 280px);
+        width: min(calc(100% - 16px), 280px);
+        bottom: max(4px, env(safe-area-inset-bottom));
       }
 
       .side-label {
