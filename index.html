@@ -1945,6 +1945,10 @@
 
   function migrateRouteStats(raw) {
     if (!raw) return defaultRouteStats();
+    if (typeof raw.currentStreak !== 'number') raw.currentStreak = 0;
+    if (typeof raw.bestStreak !== 'number') {
+      raw.bestStreak = raw.currentStreak;
+    }
     if (!raw.runSuccesses) raw.runSuccesses = [];
     if (raw.session === undefined) raw.session = null;
     if (raw.session && raw.session.orderedIndex === undefined) {
@@ -2176,6 +2180,10 @@
     return Math.max(bundle.random.currentStreak, bundle.ordered.currentStreak);
   }
 
+  function maxWordsBestStreak(bundle) {
+    return Math.max(bundle.random.bestStreak || 0, bundle.ordered.bestStreak || 0);
+  }
+
   function maxFixedWordsStreak() {
     var best = 0;
     WORD_KEYS.forEach(function (key) {
@@ -2183,6 +2191,23 @@
       if (streak > best) best = streak;
     });
     return best;
+  }
+
+  function maxFixedWordsBestStreak() {
+    var best = 0;
+    WORD_KEYS.forEach(function (key) {
+      var streak = maxWordsBestStreak(player.modes.words.fixed[key]);
+      if (streak > best) best = streak;
+    });
+    return best;
+  }
+
+  function formatHomeRouteStats(stats) {
+    var parts = ['Best 🏅 ' + (stats.bestStreak || 0)];
+    if (stats.currentStreak > 0) {
+      parts.unshift('🔥 ' + stats.currentStreak);
+    }
+    return parts.join(' · ');
   }
 
   function buildGameModeLabel(mode, route, wordsStyle, wordKey) {
@@ -2773,8 +2798,8 @@
       var resumeEl = card ? card.querySelector('.mode-resume-hint') : null;
       var hasSession = !!bundle.random.session;
       statsEl.textContent =
-        'Random 🔥 ' + bundle.random.currentStreak +
-        ' · Ordered 🔥 ' + bundle.ordered.currentStreak;
+        'Random ' + formatHomeRouteStats(bundle.random) +
+        ' · Ordered ' + formatHomeRouteStats(bundle.ordered);
       if (card) {
         card.classList.toggle('has-progress', hasSession);
       }
@@ -2787,9 +2812,15 @@
     var wordsStatsEl = document.getElementById('stats-words');
     var wordsResumeEl = wordsCard ? wordsCard.querySelector('.mode-resume-hint') : null;
     var wordsHasSession = wordsModeHasSession();
-    wordsStatsEl.textContent =
-      'Random words 🔥 ' + maxWordsStreak(wordsBundle.randomWords) +
-      ' · Choose word 🔥 ' + maxFixedWordsStreak();
+    var randomWordsCurrent = maxWordsStreak(wordsBundle.randomWords);
+    var randomWordsBest = maxWordsBestStreak(wordsBundle.randomWords);
+    var fixedWordsCurrent = maxFixedWordsStreak();
+    var fixedWordsBest = maxFixedWordsBestStreak();
+    var randomWordsLine = 'Best 🏅 ' + randomWordsBest;
+    if (randomWordsCurrent > 0) randomWordsLine = '🔥 ' + randomWordsCurrent + ' · ' + randomWordsLine;
+    var fixedWordsLine = 'Best 🏅 ' + fixedWordsBest;
+    if (fixedWordsCurrent > 0) fixedWordsLine = '🔥 ' + fixedWordsCurrent + ' · ' + fixedWordsLine;
+    wordsStatsEl.textContent = 'Random words ' + randomWordsLine + ' · Choose word ' + fixedWordsLine;
     if (wordsCard) {
       wordsCard.classList.toggle('has-progress', wordsHasSession);
     }
@@ -2996,11 +3027,10 @@
       modeStats.correctCount++;
       modeStats.runSuccesses.push(makeSuccessEntry(q));
       modeStats.currentStreak++;
-      if (modeStats.currentStreak > modeStats.bestStreak) {
-        modeStats.bestStreak = modeStats.currentStreak;
-      }
+      modeStats.bestStreak = Math.max(modeStats.bestStreak || 0, modeStats.currentStreak);
       saveSession({ screen: 'game', pendingNext: true });
       updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, true);
+      updateHomeStats();
       renderStreakHistory();
 
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
@@ -3017,6 +3047,7 @@
       modeStats.runSuccesses = [];
       savePlayer();
       updateStreakUI(0, bestStreak, false);
+      updateHomeStats();
       renderStreakHistory();
       if (lostStreak === 0 && successes.length === 0) {
         showWrongMark(function () {
