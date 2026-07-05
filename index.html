@@ -222,8 +222,7 @@
       100% { transform: scale(1); }
     }
 
-    .milestone-label { color: var(--accent); font-size: 0.85rem; }
-    .best-streak-label { color: var(--text-muted); font-size: 0.85rem; }
+    .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
 
     .progress-bar {
       height: 4px;
@@ -547,8 +546,8 @@
         <span class="streak-display streak-hero">🔥 <span id="game-streak">0</span></span>
       </div>
       <div class="game-header-row">
-        <span class="best-streak-label">Best: <span id="game-best-streak">0</span></span>
-        <span class="milestone-label" id="milestone-label">Next reward at 5</span>
+        <span></span>
+        <span class="best-streak-label">🏅 Best: <span id="game-best-streak">0</span></span>
       </div>
       <p class="prompt" id="game-prompt"></p>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -917,7 +916,6 @@
   var celebrationBest = document.getElementById('celebration-best');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
-  var milestoneLabel = document.getElementById('milestone-label');
 
   var dirEls = {
     up: document.getElementById('opt-up'),
@@ -951,20 +949,12 @@
     });
   }
 
-  function nextMilestoneAt(streak) {
-    return Math.ceil((streak + 1) / STREAK_MILESTONE) * STREAK_MILESTONE;
-  }
-
   function updateStreakUI(streak, bestStreak, animate) {
     gameStreakEl.textContent = streak;
     document.getElementById('game-best-streak').textContent = bestStreak;
-    var nextAt = nextMilestoneAt(streak);
     var progress = streak === 0 ? 0 : ((streak % STREAK_MILESTONE) / STREAK_MILESTONE) * 100;
     if (streak > 0 && streak % STREAK_MILESTONE === 0) progress = 100;
     document.getElementById('progress-fill').style.width = progress + '%';
-    milestoneLabel.textContent = streak % STREAK_MILESTONE === 0 && streak > 0
-      ? 'Reward unlocked!'
-      : 'Next reward at ' + nextAt;
     if (animate && streakHeroEl) {
       streakHeroEl.classList.remove('streak-pop');
       void streakHeroEl.offsetWidth;
