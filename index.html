@@ -53,53 +53,7 @@
 
     .screen.active { display: flex; }
 
-    /* Name screen */
-    #screen-name {
-      align-items: center;
-      justify-content: center;
-      padding: 16px 20px;
-      background: linear-gradient(160deg, #0f1419 0%, #1a2a3a 100%);
-      gap: 12px;
-    }
-
-    .name-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: clamp(24px, 5vh, 40px) clamp(20px, 4vw, 32px);
-      width: 100%;
-      max-width: 400px;
-      max-height: 100%;
-      flex-shrink: 1;
-      min-height: 0;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
-
-    .name-card h1 {
-      font-size: 2rem;
-      margin-bottom: 8px;
-      background: linear-gradient(90deg, var(--primary), #81d4fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .name-card p { color: var(--text-muted); margin-bottom: 24px; }
-
-    .name-card input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid #2a3a4a;
-      border-radius: var(--radius);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 1.1rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .name-card input:focus { border-color: var(--primary); }
+    /* Name screen — removed; share name collected via modal on WhatsApp share */
 
     .btn {
       display: inline-flex;
@@ -146,18 +100,68 @@
 
     .storage-warning.visible { display: block; }
 
+    .share-name-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .share-name-overlay.hidden { display: none; }
+
+    .share-name-dialog {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: clamp(24px, 5vh, 32px);
+      width: 100%;
+      max-width: 360px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .share-name-dialog h2 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .share-name-dialog p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    .share-name-dialog input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #2a3a4a;
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1.1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .share-name-dialog input:focus { border-color: var(--primary); }
+
+    .share-name-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .share-name-actions .btn { flex: 1; margin-top: 0; }
+
     .app-credit {
       text-align: center;
       color: var(--text-muted);
       font-size: 0.75rem;
       line-height: 1.5;
       flex-shrink: 0;
-    }
-
-    #screen-name .app-credit {
-      flex-shrink: 0;
-      padding: 0 20px 12px;
-      width: 100%;
     }
 
     #screen-home .app-credit {
@@ -182,14 +186,10 @@
     }
 
     .home-header h1 { font-size: clamp(1.25rem, 4.5vw, 1.8rem); margin-bottom: 2px; }
-    .home-header .player-name { color: var(--primary); font-size: clamp(0.95rem, 3.5vw, 1.2rem); }
-    .change-name-link {
+    .home-header .home-tagline {
       color: var(--text-muted);
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-decoration: underline;
+      font-size: clamp(0.85rem, 3vw, 1rem);
       margin-top: 4px;
-      display: inline-block;
     }
 
     .mode-grid {
@@ -1323,6 +1323,46 @@
       cursor: grabbing;
     }
 
+    .flag-center.idle-demo-up {
+      animation: flagDemoNudgeUp 0.9s ease-in-out;
+    }
+
+    .flag-center.idle-demo-down {
+      animation: flagDemoNudgeDown 0.9s ease-in-out;
+    }
+
+    .flag-center.idle-demo-left {
+      animation: flagDemoNudgeLeft 0.9s ease-in-out;
+    }
+
+    .flag-center.idle-demo-right {
+      animation: flagDemoNudgeRight 0.9s ease-in-out;
+    }
+
+    @keyframes flagDemoNudgeUp {
+      0%, 100% { transform: translate(0, 0); }
+      45% { transform: translate(0, -56px); }
+      55% { transform: translate(0, -56px); }
+    }
+
+    @keyframes flagDemoNudgeDown {
+      0%, 100% { transform: translate(0, 0); }
+      45% { transform: translate(0, 56px); }
+      55% { transform: translate(0, 56px); }
+    }
+
+    @keyframes flagDemoNudgeLeft {
+      0%, 100% { transform: translate(0, 0); }
+      45% { transform: translate(-56px, 0); }
+      55% { transform: translate(-56px, 0); }
+    }
+
+    @keyframes flagDemoNudgeRight {
+      0%, 100% { transform: translate(0, 0); }
+      45% { transform: translate(56px, 0); }
+      55% { transform: translate(56px, 0); }
+    }
+
     .game-area.is-dragging .dir-option,
     .game-area.is-dragging .side-label {
       pointer-events: none;
@@ -1337,6 +1377,17 @@
     }
 
     .swipe-hint.hidden { display: none; }
+
+    .swipe-hint.swipe-hint-active {
+      color: var(--primary);
+      font-weight: 600;
+      animation: swipeHintPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes swipeHintPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
 
     /* Feedback overlay */
     #screen-feedback {
@@ -1638,24 +1689,11 @@
 </head>
 <body>
 
-  <!-- Name entry -->
-  <section id="screen-name" class="screen active">
-    <div class="name-card">
-      <h1>Geo Quiz</h1>
-      <p>Test your knowledge of flags, capitals, and languages!</p>
-      <input type="text" id="name-input" placeholder="Enter your name" maxlength="30" autocomplete="name">
-      <button class="btn btn-primary" id="name-submit" disabled>Start Playing</button>
-      <p class="storage-warning" id="storage-warning">Progress cannot be saved (localStorage unavailable).</p>
-    </div>
-    <p class="app-credit">Developed by David Diamant<br>© <span class="app-credit-year"></span> All rights reserved.</p>
-  </section>
-
   <!-- Home -->
-  <section id="screen-home" class="screen">
+  <section id="screen-home" class="screen active">
     <div class="home-header">
       <h1>Geo Quiz</h1>
-      <p class="player-name">Welcome, <span id="home-player-name"></span>!</p>
-      <span class="change-name-link" id="change-name">Change name</span>
+      <p class="home-tagline">Test your knowledge of flags, capitals, and languages!</p>
     </div>
     <div class="mode-grid">
       <div class="mode-card" data-mode="flags">
@@ -1686,6 +1724,7 @@
         <div class="mode-resume-hint"></div>
       </div>
     </div>
+    <p class="storage-warning" id="storage-warning">Progress cannot be saved (localStorage unavailable).</p>
     <p class="app-credit">Developed by David Diamant<br>© <span class="app-credit-year"></span> All rights reserved.</p>
   </section>
 
@@ -1840,6 +1879,18 @@
     </div>
   </section>
 
+  <div class="share-name-overlay hidden" id="share-name-overlay">
+    <div class="share-name-dialog" role="dialog" aria-labelledby="share-name-title">
+      <h2 id="share-name-title">Your name for sharing</h2>
+      <p>Add your name to personalize the share image</p>
+      <input type="text" id="share-name-input" placeholder="Enter your name" maxlength="30" autocomplete="name">
+      <div class="share-name-actions">
+        <button class="btn btn-secondary" id="share-name-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="share-name-submit" type="button" disabled>Share</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function () {
   'use strict';
@@ -1848,6 +1899,10 @@
   const STREAK_MILESTONE = 5;
   const SWIPE_THRESHOLD = 40;
   const FLAG_DRAG_MAX = 72;
+  const IDLE_DEMO_DELAY_MS = 3500;
+  const IDLE_DEMO_REPEAT_DELAY_MS = 5000;
+  const IDLE_DEMO_STEP_MS = 1000;
+  const IDLE_DEMO_DIRECTIONS = ['up', 'right', 'down', 'left'];
   const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
   const WRONG_MARK_MS = 450;
   const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
@@ -2704,6 +2759,7 @@
   }
 
   function goHome() {
+    clearIdleDemo();
     clearFeedbackTimers();
     clearCorrectSuccessTimer();
     correctSuccessActive = false;
@@ -2735,7 +2791,6 @@
 
   // --- DOM refs ---
   var screens = {
-    name: document.getElementById('screen-name'),
     home: document.getElementById('screen-home'),
     wordsStyle: document.getElementById('screen-words-style'),
     wordPick: document.getElementById('screen-word-pick'),
@@ -2745,11 +2800,12 @@
     streakEnd: document.getElementById('screen-streak-end')
   };
 
-  var nameInput = document.getElementById('name-input');
-  var nameSubmit = document.getElementById('name-submit');
   var storageWarning = document.getElementById('storage-warning');
-  var homePlayerName = document.getElementById('home-player-name');
-  var changeNameBtn = document.getElementById('change-name');
+  var shareNameOverlay = document.getElementById('share-name-overlay');
+  var shareNameInput = document.getElementById('share-name-input');
+  var shareNameSubmit = document.getElementById('share-name-submit');
+  var shareNameCancel = document.getElementById('share-name-cancel');
+  var shareNameCallback = null;
   var gameArea = document.getElementById('game-area');
   var gameFlag = document.getElementById('game-flag');
   var gameCountryName = document.getElementById('game-country-name');
@@ -2869,7 +2925,6 @@
   var lastStreakEndSummary = null;
 
   function computeHash() {
-    if (screens.name.classList.contains('active')) return '#/name';
     if (screens.home.classList.contains('active')) return '#/home';
     if (screens.wordsStyle.classList.contains('active')) return '#/words';
     if (screens.wordPick.classList.contains('active')) return '#/words/fixed';
@@ -2909,7 +2964,7 @@
     var raw = location.hash.replace(/^#\/?/, '');
     var parts = raw ? raw.split('/') : [];
     if (parts.length === 0 || parts[0] === 'home') return { page: 'home' };
-    if (parts[0] === 'name') return { page: 'name' };
+    if (parts[0] === 'name') return { page: 'home' };
     if (parts[0] === 'words') {
       if (parts.length === 1) return { page: 'wordsStyle' };
       if (parts[1] === 'random' && parts.length === 2) {
@@ -3009,23 +3064,7 @@
 
     var parsed = parseHashRoute();
 
-    if (!player.name) {
-      showScreen('name');
-      skipUrlSync = false;
-      applyingRoute = false;
-      syncUrl(true);
-      return;
-    }
-
-    if (parsed.page === 'name') {
-      nameInput.value = player.name;
-      nameSubmit.disabled = player.name.length === 0;
-      leaveGameView();
-      pendingMode = null;
-      pendingWordsStyle = null;
-      pendingFixedWordKey = null;
-      showScreen('name');
-    } else if (parsed.page === 'wordsStyle') {
+    if (parsed.page === 'wordsStyle') {
       leaveGameView();
       showWordsStylePicker();
     } else if (parsed.page === 'wordPick') {
@@ -3068,7 +3107,6 @@
   }
 
   function updateHomeStats() {
-    homePlayerName.textContent = player.name;
     ['flags', 'capitals'].forEach(function (mode) {
       var bundle = player.modes[mode];
       var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
@@ -3268,6 +3306,7 @@
     sideLabelEls.left.classList.remove('highlight');
     sideLabelEls.right.classList.remove('highlight');
     resetFlagPosition();
+    scheduleIdleDemo();
   }
 
   function nextQuestion() {
@@ -3293,6 +3332,7 @@
 
   function handleAnswer(dir) {
     if (inputLocked) return;
+    clearIdleDemo();
     inputLocked = true;
 
     var q = gameState.currentQuestion;
@@ -3701,7 +3741,38 @@
     return Promise.resolve();
   }
 
-  function shareStreakOnWhatsApp() {
+  function savePlayerName(name) {
+    var trimmed = name.trim();
+    if (!trimmed) return false;
+    player.name = trimmed;
+    if (!player.createdAt) player.createdAt = new Date().toISOString();
+    savePlayer();
+    return true;
+  }
+
+  function closeShareNamePrompt() {
+    shareNameOverlay.classList.add('hidden');
+    shareNameCallback = null;
+    shareNameInput.value = '';
+    shareNameSubmit.disabled = true;
+  }
+
+  function openShareNamePrompt(onSubmit) {
+    shareNameCallback = onSubmit;
+    shareNameInput.value = player.name || '';
+    shareNameSubmit.disabled = shareNameInput.value.trim().length === 0;
+    shareNameOverlay.classList.remove('hidden');
+    shareNameInput.focus();
+  }
+
+  function submitShareNamePrompt() {
+    if (!savePlayerName(shareNameInput.value)) return;
+    var callback = shareNameCallback;
+    closeShareNamePrompt();
+    if (callback) callback();
+  }
+
+  function proceedShareStreakOnWhatsApp() {
     if (!lastStreakEndSummary || !currentMode || !currentRoute) return;
     btnStreakEndShare.disabled = true;
     btnStreakEndShare.textContent = 'Preparing…';
@@ -3714,6 +3785,15 @@
         btnStreakEndShare.disabled = false;
         btnStreakEndShare.textContent = 'Share on WhatsApp';
       });
+  }
+
+  function shareStreakOnWhatsApp() {
+    if (!lastStreakEndSummary || !currentMode || !currentRoute) return;
+    if (!player.name || !player.name.trim()) {
+      openShareNamePrompt(proceedShareStreakOnWhatsApp);
+      return;
+    }
+    proceedShareStreakOnWhatsApp();
   }
 
   function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct, skipSave) {
@@ -3904,12 +3984,103 @@
   var swipeStart = null;
   var isDragging = false;
   var activePointerId = null;
+  var idleDemoTimer = null;
+  var idleDemoStepTimer = null;
+  var idleDemoActive = false;
+  var idleDemoStep = 0;
+
+  function clearIdleDemoClasses() {
+    gameFlag.classList.remove('idle-demo-up', 'idle-demo-down', 'idle-demo-left', 'idle-demo-right');
+  }
+
+  function clearIdleDemo() {
+    if (idleDemoTimer) {
+      clearTimeout(idleDemoTimer);
+      idleDemoTimer = null;
+    }
+    if (idleDemoStepTimer) {
+      clearInterval(idleDemoStepTimer);
+      idleDemoStepTimer = null;
+    }
+    idleDemoActive = false;
+    idleDemoStep = 0;
+    clearIdleDemoClasses();
+    highlightDirection(null);
+    if (swipeHint) {
+      swipeHint.classList.remove('swipe-hint-active');
+      swipeHint.textContent = 'Drag the flag toward your answer ↑ ↓ ← →';
+      if (currentMode && getRouteStats().currentStreak > 0) {
+        swipeHint.classList.add('hidden');
+      }
+    }
+  }
+
+  function isIdleDemoBlocked() {
+    if (inputLocked || isDragging) return true;
+    if (celebrationActive || wrongMarkActive || correctSuccessActive) return true;
+    if (!screens.game.classList.contains('active')) return true;
+    return false;
+  }
+
+  function finishIdleDemoRound() {
+    if (idleDemoStepTimer) {
+      clearInterval(idleDemoStepTimer);
+      idleDemoStepTimer = null;
+    }
+    clearIdleDemoClasses();
+    highlightDirection(null);
+    idleDemoActive = false;
+    idleDemoStep = 0;
+    if (swipeHint) {
+      swipeHint.classList.remove('swipe-hint-active');
+    }
+    if (!isIdleDemoBlocked()) {
+      idleDemoTimer = setTimeout(startIdleDemo, IDLE_DEMO_REPEAT_DELAY_MS);
+    }
+  }
+
+  function runIdleDemoStep() {
+    if (isIdleDemoBlocked()) {
+      clearIdleDemo();
+      return;
+    }
+    if (idleDemoStep >= IDLE_DEMO_DIRECTIONS.length) {
+      finishIdleDemoRound();
+      return;
+    }
+    var dir = IDLE_DEMO_DIRECTIONS[idleDemoStep];
+    idleDemoStep++;
+    clearIdleDemoClasses();
+    void gameFlag.offsetWidth;
+    highlightDirection(dir);
+    gameFlag.classList.add('idle-demo-' + dir);
+  }
+
+  function startIdleDemo() {
+    if (isIdleDemoBlocked()) return;
+    idleDemoActive = true;
+    idleDemoStep = 0;
+    if (swipeHint) {
+      swipeHint.classList.remove('hidden');
+      swipeHint.classList.add('swipe-hint-active');
+      swipeHint.textContent = 'Drag the flag toward an answer ↑ ↓ ← →';
+    }
+    runIdleDemoStep();
+    idleDemoStepTimer = setInterval(runIdleDemoStep, IDLE_DEMO_STEP_MS);
+  }
+
+  function scheduleIdleDemo() {
+    clearIdleDemo();
+    if (!screens.game.classList.contains('active')) return;
+    idleDemoTimer = setTimeout(startIdleDemo, IDLE_DEMO_DELAY_MS);
+  }
 
   function clampDrag(value) {
     return Math.max(-FLAG_DRAG_MAX, Math.min(FLAG_DRAG_MAX, value));
   }
 
   function resetFlagPosition() {
+    clearIdleDemoClasses();
     gameFlag.style.transform = '';
     gameFlag.classList.remove('dragging');
     gameArea.classList.remove('is-dragging');
@@ -3942,6 +4113,7 @@
 
   function onPointerStart(x, y, target, pointerId) {
     if (inputLocked || !isFlagTarget(target)) return;
+    clearIdleDemo();
     swipeStart = { x: x, y: y };
     isDragging = true;
     activePointerId = pointerId;
@@ -4072,31 +4244,20 @@
     dismissCelebration();
   });
 
-  // --- Name screen ---
-  nameInput.addEventListener('input', function () {
-    nameSubmit.disabled = nameInput.value.trim().length === 0;
+  shareNameInput.addEventListener('input', function () {
+    shareNameSubmit.disabled = shareNameInput.value.trim().length === 0;
   });
 
-  nameInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !nameSubmit.disabled) submitName();
+  shareNameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !shareNameSubmit.disabled) submitShareNamePrompt();
+    if (e.key === 'Escape') closeShareNamePrompt();
   });
 
-  function submitName() {
-    var name = nameInput.value.trim();
-    if (!name) return;
-    player.name = name;
-    if (!player.createdAt) player.createdAt = new Date().toISOString();
-    savePlayer();
-    updateHomeStats();
-    showScreen('home');
-  }
+  shareNameSubmit.addEventListener('click', submitShareNamePrompt);
+  shareNameCancel.addEventListener('click', closeShareNamePrompt);
 
-  nameSubmit.addEventListener('click', submitName);
-
-  changeNameBtn.addEventListener('click', function () {
-    nameInput.value = player.name;
-    nameSubmit.disabled = player.name.length === 0;
-    showScreen('name');
+  shareNameOverlay.addEventListener('click', function (e) {
+    if (e.target === shareNameOverlay) closeShareNamePrompt();
   });
 
   // --- Home mode cards ---
