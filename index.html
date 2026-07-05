@@ -231,7 +231,7 @@
       flex: 1;
       display: grid;
       grid-template-rows: auto 1fr auto;
-      grid-template-columns: minmax(64px, 18vw) auto minmax(64px, 18vw);
+      grid-template-columns: minmax(64px, 18vw) 1fr minmax(64px, 18vw);
       grid-template-areas:
         ". up ."
         "left flag right"
@@ -241,6 +241,7 @@
       position: relative;
       align-items: center;
       justify-items: center;
+      min-height: 0;
     }
 
     .dir-option {
@@ -276,12 +277,17 @@
 
     .flag-center {
       grid-area: flag;
+      align-self: stretch;
+      justify-self: stretch;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(4.5rem, 22vw, 7.5rem);
+      font-size: min(38vw, 48vh, 20rem);
       line-height: 1;
-      padding: 0 4px;
+      padding: 0;
       filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
       transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
       will-change: transform;
