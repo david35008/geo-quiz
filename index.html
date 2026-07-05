@@ -1475,7 +1475,7 @@
         <div class="streak-end-list" id="streak-end-list"></div>
       </div>
       <div class="streak-end-actions">
-        <button class="btn btn-primary" id="streak-end-continue" style="width:100%">Keep playing</button>
+        <button class="btn btn-primary" id="streak-end-continue" style="width:100%">Play again</button>
       </div>
     </div>
   </section>
@@ -1733,6 +1733,13 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  function rotateArray(arr, offset) {
+    var len = arr.length;
+    if (len === 0) return arr.slice();
+    var n = ((offset % len) + len) % len;
+    return arr.slice(n).concat(arr.slice(0, n));
+  }
+
   function buildOrderedCountryList() {
     var byTier = [[], [], [], [], []];
     COUNTRIES.forEach(function (c) {
@@ -1755,6 +1762,25 @@
   }
 
   var ORDERED_COUNTRIES = buildOrderedCountryList();
+
+  function buildOrderedPlans() {
+    var byCountry = ORDERED_COUNTRIES.map(function (country) {
+      return { country: country, wordKey: null };
+    });
+    var wordsPlan = [];
+    ORDERED_COUNTRIES.forEach(function (country) {
+      WORD_KEYS.forEach(function (wordKey) {
+        wordsPlan.push({ country: country, wordKey: wordKey });
+      });
+    });
+    return {
+      flags: byCountry,
+      capitals: byCountry,
+      words: wordsPlan
+    };
+  }
+
+  var ORDERED_PLANS = buildOrderedPlans();
 
   function defaultRouteStats() {
     return {
@@ -2318,7 +2344,7 @@
     return country.words[wordKey];
   }
 
-  function getDistractors(correctCountry, mode, wordKey, count) {
+  function getDistractors(correctCountry, mode, wordKey, count, questionIndex, deterministic) {
     var correctText = getAnswerText(correctCountry, mode, wordKey);
     var sameTier = COUNTRIES.filter(function (c) {
       return c.code !== correctCountry.code && c.difficulty === correctCountry.difficulty;
@@ -2329,7 +2355,19 @@
       return getAnswerText(c, mode, wordKey);
     }).filter(function (t) { return t !== correctText; });
 
-    candidates = shuffle(Array.from(new Set(candidates)));
+    candidates = Array.from(new Set(candidates));
+    if (deterministic) {
+      candidates.sort(function (a, b) { return a.localeCompare(b); });
+      if (candidates.length === 0) return [];
+      var result = [];
+      var start = questionIndex % candidates.length;
+      for (var i = 0; i < count; i++) {
+        result.push(candidates[(start + i) % candidates.length]);
+      }
+      return result;
+    }
+
+    candidates = shuffle(candidates);
     while (candidates.length < count) {
       var extra = pickRandom(others);
       if (extra.code !== correctCountry.code) {
@@ -2342,21 +2380,35 @@
 
   function buildQuestion(mode, route, streak, state) {
     var country;
+    var wordKey;
+    var questionIndex = route === 'ordered' ? state.orderedIndex : 0;
+    var deterministic = route === 'ordered';
+
     if (route === 'ordered') {
-      country = ORDERED_COUNTRIES[state.orderedIndex % ORDERED_COUNTRIES.length];
+      var plan = ORDERED_PLANS[mode];
+      var step = plan[questionIndex % plan.length];
+      country = step.country;
+      wordKey = mode === 'words' ? step.wordKey : WORD_KEYS[0];
     } else {
       var attempts = 0;
       do {
         country = pickCountryForStreak(streak);
         attempts++;
       } while (state.usedCodes.indexOf(country.code) !== -1 && attempts < 50);
+      wordKey = pickRandom(WORD_KEYS);
     }
 
-    var wordKey = pickRandom(WORD_KEYS);
     var correct = getAnswerText(country, mode, wordKey);
-    var distractors = getDistractors(country, mode, wordKey, 3);
-    var options = shuffle([correct].concat(distractors));
-    var dirOrder = shuffle(DIRECTIONS.slice());
+    var distractors = getDistractors(country, mode, wordKey, 3, questionIndex, deterministic);
+    var options;
+    var dirOrder;
+    if (deterministic) {
+      options = rotateArray([correct].concat(distractors), questionIndex);
+      dirOrder = rotateArray(DIRECTIONS.slice(), questionIndex);
+    } else {
+      options = shuffle([correct].concat(distractors));
+      dirOrder = shuffle(DIRECTIONS.slice());
+    }
     var mapping = {};
     for (var i = 0; i < 4; i++) {
       mapping[dirOrder[i]] = options[i];
