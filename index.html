@@ -259,7 +259,9 @@
       transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
       border: 2px solid transparent;
       min-height: 44px;
-      word-break: break-word;
+      word-break: normal;
+      overflow-wrap: normal;
+      hyphens: none;
       width: 100%;
     }
 
@@ -272,8 +274,8 @@
 
     .dir-up    { grid-area: up; max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
     .dir-down  { grid-area: down; max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
-    .dir-left  { grid-area: left; max-width: min(100%, 88px); }
-    .dir-right { grid-area: right; max-width: min(100%, 88px); }
+    .dir-left  { grid-area: left; max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
+    .dir-right { grid-area: right; max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
 
     .flag-center {
       grid-area: flag;
