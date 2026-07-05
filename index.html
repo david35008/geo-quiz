@@ -2557,9 +2557,10 @@
       renderStreakHistory();
 
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
+        showCorrectSuccess(true);
         showCelebration(modeStats.currentStreak);
       } else {
-        showCorrectSuccess();
+        showCorrectSuccess(false);
       }
     } else {
       var lostStreak = modeStats.currentStreak;
@@ -2622,24 +2623,30 @@
     }
   }
 
-  function showCorrectSuccess() {
+  function showCorrectSuccess(holdForCelebration) {
     clearCorrectSuccessTimer();
     correctSuccessActive = true;
     resetFlagPosition();
     gameFlag.classList.add('show-success');
     gameFlag.innerHTML = '<span class="success-badge">✓</span>';
 
-    correctSuccessTimer = setTimeout(function () {
-      dismissCorrectSuccess();
-    }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
+    if (!holdForCelebration) {
+      correctSuccessTimer = setTimeout(function () {
+        dismissCorrectSuccess();
+      }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
+    }
   }
 
-  function dismissCorrectSuccess() {
+  function clearCorrectSuccessMark() {
     if (!correctSuccessActive) return;
     correctSuccessActive = false;
     clearCorrectSuccessTimer();
     gameFlag.classList.remove('show-success');
-    nextQuestion();
+  }
+
+  function dismissCorrectSuccess() {
+    clearCorrectSuccessMark();
+    if (!celebrationActive) nextQuestion();
   }
 
   function clearFeedbackTimers() {
@@ -2821,6 +2828,7 @@
       clearTimeout(celebrationTimer);
       celebrationTimer = null;
     }
+    clearCorrectSuccessMark();
     hideMilestonePanel();
     nextQuestion();
   }
