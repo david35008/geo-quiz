@@ -2020,8 +2020,42 @@
     return true;
   }
 
-  function enterMode(mode, route) {
+  function beginOrderedRun(mode, route) {
+    var stats = player.modes[mode][route];
+    stats.currentStreak = 0;
+    stats.runSuccesses = [];
+    clearModeSession(mode, route);
+    currentMode = mode;
+    currentRoute = route;
+    gameState = {
+      usedCodes: [],
+      orderedIndex: 0,
+      currentQuestion: null,
+      questionStartTime: 0
+    };
+    prepareGameScreen(mode, route);
+    nextQuestion();
+  }
+
+  function resetOrderedProgress() {
+    if (currentRoute !== 'ordered' || !currentMode || !gameState) return;
+    gameState.orderedIndex = 0;
+    var stats = getRouteStats();
+    stats.currentStreak = 0;
+    stats.runSuccesses = [];
+    clearModeSession(currentMode, currentRoute);
+  }
+
+  function enterMode(mode, route, freshStart) {
+    if (route === 'ordered' && freshStart) {
+      beginOrderedRun(mode, route);
+      return;
+    }
     if (resumeMode(mode, route)) return;
+    if (route === 'ordered') {
+      beginOrderedRun(mode, route);
+      return;
+    }
     currentMode = mode;
     currentRoute = route;
     gameState = {
@@ -2049,9 +2083,11 @@
         '🔥 ' + stats.currentStreak + ' streak · Best: ' + stats.bestStreak;
       var card = document.querySelector('.route-card[data-route="' + route + '"]');
       var resumeEl = document.getElementById('route-resume-' + route);
-      if (card) card.classList.toggle('has-progress', !!stats.session);
+      if (card) card.classList.toggle('has-progress', route === 'random' && !!stats.session);
       if (resumeEl) {
-        resumeEl.textContent = stats.session ? 'Tap to continue where you left off' : '';
+        resumeEl.textContent = route === 'ordered'
+          ? 'Always starts from the first question'
+          : (stats.session ? 'Tap to continue where you left off' : '');
       }
     });
   }
@@ -2322,7 +2358,7 @@
       var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
       var statsEl = document.getElementById('stats-' + mode);
       var resumeEl = card ? card.querySelector('.mode-resume-hint') : null;
-      var hasSession = !!(bundle.random.session || bundle.ordered.session);
+      var hasSession = !!bundle.random.session;
       statsEl.textContent =
         'Random 🔥 ' + bundle.random.currentStreak +
         ' · Ordered 🔥 ' + bundle.ordered.currentStreak;
@@ -2427,13 +2463,11 @@
     var correct = getAnswerText(country, mode, wordKey);
     var distractors = getDistractors(country, mode, wordKey, 3, questionIndex, deterministic);
     var options;
-    var dirOrder;
+    var dirOrder = shuffle(DIRECTIONS.slice());
     if (deterministic) {
       options = rotateArray([correct].concat(distractors), questionIndex);
-      dirOrder = rotateArray(DIRECTIONS.slice(), questionIndex);
     } else {
       options = shuffle([correct].concat(distractors));
-      dirOrder = shuffle(DIRECTIONS.slice());
     }
     var mapping = {};
     for (var i = 0; i < 4; i++) {
@@ -2532,6 +2566,7 @@
       if (lostStreak === 0 && successes.length === 0) {
         showWrongMark(function () {
           inputLocked = false;
+          if (currentRoute === 'ordered') resetOrderedProgress();
           nextQuestion();
         });
         return;
@@ -2629,6 +2664,7 @@
   }
 
   function dismissStreakEndSummary() {
+    if (currentRoute === 'ordered') resetOrderedProgress();
     showScreen('game');
     nextQuestion();
   }
@@ -2975,7 +3011,8 @@
   document.querySelectorAll('.route-card').forEach(function (card) {
     card.addEventListener('click', function () {
       if (!pendingMode) return;
-      enterMode(pendingMode, card.getAttribute('data-route'));
+      var route = card.getAttribute('data-route');
+      enterMode(pendingMode, route, route === 'ordered');
     });
   });
 
