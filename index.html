@@ -130,6 +130,26 @@
 
     .storage-warning.visible { display: block; }
 
+    .app-credit {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    #screen-name .app-credit {
+      margin-top: auto;
+      padding: 20px 24px 28px;
+      width: 100%;
+    }
+
+    #screen-home .app-credit {
+      max-width: 480px;
+      margin: 28px auto 8px;
+      width: 100%;
+    }
+
     /* Home screen */
     #screen-home {
       padding: 24px;
@@ -1434,6 +1454,7 @@
       <button class="btn btn-primary" id="name-submit" disabled>Start Playing</button>
       <p class="storage-warning" id="storage-warning">Progress cannot be saved (localStorage unavailable).</p>
     </div>
+    <p class="app-credit">Developed by David Diamant<br>© <span class="app-credit-year"></span> All rights reserved.</p>
   </section>
 
   <!-- Home -->
@@ -1466,6 +1487,7 @@
         <div class="mode-resume-hint"></div>
       </div>
     </div>
+    <p class="app-credit">Developed by David Diamant<br>© <span class="app-credit-year"></span> All rights reserved.</p>
   </section>
 
   <!-- Words style picker -->
@@ -1650,6 +1672,7 @@
   const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
   const ROUTE_LABELS = { random: 'Random', ordered: 'Ordered' };
   const GAME_SHARE_URL = 'https://david35008.github.io/geo-quiz/';
+  const APP_DEVELOPER = 'David Diamant';
   const VALID_MODES = ['flags', 'capitals', 'words'];
   const VALID_ROUTES = ['random', 'ordered'];
   const DIRECTIONS = ['up', 'down', 'left', 'right'];
@@ -3147,6 +3170,13 @@
     return lines;
   }
 
+  function initAppCredit() {
+    var year = String(new Date().getFullYear());
+    document.querySelectorAll('.app-credit-year').forEach(function (el) {
+      el.textContent = year;
+    });
+  }
+
   function getGameShareUrl() {
     if (location.protocol === 'http:' || location.protocol === 'https:') {
       return location.href.split('#')[0];
@@ -3219,7 +3249,7 @@
     y += 28;
     y += 24 + 78 + 26 + 32;
     y += measureAnswersBoxHeight(ctx, summary, contentWidth);
-    y += 56;
+    y += 76;
     return y + 48;
   }
 
@@ -3335,14 +3365,18 @@
     ctx.textBaseline = 'bottom';
     ctx.fillStyle = SHARE_THEME.textMuted;
     ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText('Play Geo Quiz', width / 2, height - 28);
+    ctx.fillText('Play Geo Quiz', width / 2, height - 56);
     ctx.fillStyle = SHARE_THEME.primary;
     ctx.font = '500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     var url = getGameShareUrl();
     var urlLines = wrapCanvasLines(ctx, url, contentWidth);
     urlLines.forEach(function (line, index) {
-      ctx.fillText(line, width / 2, height - 12 - (urlLines.length - 1 - index) * 14);
+      ctx.fillText(line, width / 2, height - 40 - (urlLines.length - 1 - index) * 14);
     });
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Developed by ' + APP_DEVELOPER, width / 2, height - 24);
+    ctx.fillText('© ' + new Date().getFullYear() + ' All rights reserved.', width / 2, height - 10);
     ctx.textBaseline = 'alphabetic';
   }
 
@@ -3897,6 +3931,7 @@
   if (!storageAvailable) storageWarning.classList.add('visible');
 
   player = loadPlayer();
+  initAppCredit();
   window.addEventListener('hashchange', function () {
     applyRouteFromUrl(false);
   });
