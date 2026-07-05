@@ -844,22 +844,20 @@
     }
 
     .word-pick-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-auto-rows: minmax(0, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: auto;
       flex: 1;
       min-height: 0;
-      overflow: hidden;
-      padding-right: 2px;
-      align-content: stretch;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding-right: 4px;
+      align-content: start;
     }
 
     .word-pick-card h3 {
-      font-size: clamp(0.62rem, 2.4vw, 0.98rem);
+      font-size: 0.98rem;
       margin-bottom: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      width: 100%;
     }
 
     .word-pick-card p,
@@ -869,13 +867,8 @@
     }
 
     .word-pick-card {
-      padding: clamp(4px, 1vh, 14px) clamp(3px, 1vw, 12px);
+      padding: 14px 12px;
       text-align: center;
-      min-height: 0;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .word-pick-search {
@@ -1157,10 +1150,6 @@
       .mode-icon-flags .mode-flag-center {
         font-size: 1.75rem;
         transform: translateY(-2px);
-      }
-
-      .word-pick-grid {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
       }
 
       .streak-end-best {
@@ -2627,19 +2616,6 @@
     return (pack && pack[wordKey]) || LANG_PACKS.en[wordKey] || WORD_LABELS[wordKey];
   }
 
-  function layoutWordPickGrid() {
-    var grid = document.getElementById('word-pick-grid');
-    if (!grid) return;
-    var count = grid.querySelectorAll('.word-pick-card').length;
-    if (!count) {
-      grid.style.gridTemplateRows = '';
-      return;
-    }
-    var cols = window.matchMedia('(max-width: 640px)').matches ? 5 : 4;
-    var rows = Math.ceil(count / cols);
-    grid.style.gridTemplateRows = 'repeat(' + rows + ', minmax(0, 1fr))';
-  }
-
   function renderWordPickerCards(filterText) {
     var grid = document.getElementById('word-pick-grid');
     var countEl = document.getElementById('word-pick-count');
@@ -2666,7 +2642,6 @@
     if (countEl) {
       countEl.textContent = visible + ' of ' + WORD_KEYS.length + ' words';
     }
-    layoutWordPickGrid();
   }
 
   function showWordPicker() {
@@ -3079,9 +3054,6 @@
     Object.keys(screens).forEach(function (k) {
       screens[k].classList.toggle('active', k === name);
     });
-    if (name === 'wordPick') {
-      requestAnimationFrame(layoutWordPickGrid);
-    }
     if (!skipUrlSync) syncUrl(false);
   }
 
@@ -4211,11 +4183,6 @@
   initAppCredit();
   window.addEventListener('hashchange', function () {
     applyRouteFromUrl(false);
-  });
-  window.addEventListener('resize', function () {
-    if (screens.wordPick.classList.contains('active')) {
-      layoutWordPickGrid();
-    }
   });
   applyRouteFromUrl(true);
 })();
