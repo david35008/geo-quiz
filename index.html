@@ -883,6 +883,9 @@
         min-height: 44px;
         padding: 6px 4px;
         height: auto;
+        overflow-wrap: normal;
+        word-break: normal;
+        hyphens: none;
       }
 
       .dir-up {
@@ -923,7 +926,7 @@
       border: 2px solid transparent;
       min-height: 44px;
       word-break: normal;
-      overflow-wrap: anywhere;
+      overflow-wrap: normal;
       hyphens: none;
       width: 100%;
     }
@@ -937,8 +940,14 @@
 
     .dir-up    { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
     .dir-down  { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
-    .dir-left  { max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
-    .dir-right { max-width: min(100%, 108px); font-size: clamp(0.95rem, 3.2vw, 1.2rem); }
+    .dir-left,
+    .dir-right {
+      max-width: min(100%, 108px);
+      font-size: clamp(0.95rem, 3.2vw, 1.2rem);
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: none;
+    }
 
     .flag-center {
       align-self: start;
