@@ -234,33 +234,35 @@
       100% { transform: scale(1); color: #ff7043; }
     }
 
-    .success-check {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      z-index: 50;
-      width: 42px;
-      height: 42px;
+    .success-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(72px, 22vw, 120px);
+      height: clamp(72px, 22vw, 120px);
       border-radius: 50%;
       background: var(--correct);
       color: #fff;
-      font-size: 1.5rem;
+      font-size: clamp(2rem, 10vw, 3.5rem);
       font-weight: 700;
-      line-height: 42px;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
-      transform: translateX(-50%) scale(0);
+      line-height: 1;
+      animation: successBadgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
-    .success-check.visible {
-      animation: successCheckPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    @keyframes successBadgePop {
+      0% { transform: scale(0); opacity: 0; }
+      55% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
-    @keyframes successCheckPop {
-      0% { transform: translateX(-50%) scale(0); opacity: 0; }
-      55% { transform: translateX(-50%) scale(1.15); opacity: 1; }
-      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    .flag-center.show-success {
+      filter: none;
+      cursor: default;
+      transform: none !important;
+    }
+
+    .flag-center.show-success.dragging {
+      cursor: default;
     }
 
     .wrong-x {
@@ -283,7 +285,13 @@
     }
 
     .wrong-x.visible {
-      animation: successCheckPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      animation: topMarkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes topMarkPop {
+      0% { transform: translateX(-50%) scale(0); opacity: 0; }
+      55% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
     }
 
     .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
@@ -401,6 +409,45 @@
       align-items: center;
       justify-items: center;
       min-height: 0;
+    }
+
+    /* Phone: sit flag + answers in the lower thumb zone */
+    @media (max-width: 640px) {
+      #screen-game {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+      }
+
+      .game-header {
+        padding: 8px 14px 6px;
+        gap: 2px;
+      }
+
+      .game-header .prompt {
+        padding: 4px 0 0;
+        font-size: 0.88rem;
+      }
+
+      .progress-bar {
+        margin-top: 6px;
+      }
+
+      .game-area {
+        grid-template-rows: auto auto auto;
+        align-content: end;
+        justify-content: center;
+        padding: 4px 8px 16px;
+        gap: 8px;
+      }
+
+      .flag-center {
+        min-height: clamp(88px, 22vw, 140px);
+        font-size: min(34vw, 28vh, 10rem);
+      }
+
+      .swipe-hint {
+        padding: 4px 8px 10px;
+        font-size: 0.78rem;
+      }
     }
 
     .dir-option {
@@ -918,7 +965,6 @@
 
   <!-- Game -->
   <section id="screen-game" class="screen">
-    <div class="success-check" id="success-check" aria-hidden="true">✓</div>
     <div class="wrong-x" id="wrong-x" aria-hidden="true">✕</div>
     <div class="game-header">
       <div class="game-header-row">
@@ -1500,8 +1546,7 @@
     clearFeedbackTimers();
     clearCorrectSuccessTimer();
     correctSuccessActive = false;
-    successCheck.classList.remove('visible');
-    successCheck.setAttribute('aria-hidden', 'true');
+    gameFlag.classList.remove('show-success');
     clearWrongMarkTimer();
     wrongMarkActive = false;
     wrongMarkCallback = null;
@@ -1561,7 +1606,6 @@
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
-  var successCheck = document.getElementById('success-check');
   var wrongX = document.getElementById('wrong-x');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
@@ -1742,7 +1786,8 @@
     inputLocked = false;
     var modeStats = getRouteStats();
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
-    document.getElementById('game-flag').textContent = flagEmoji(q.country.code);
+    gameFlag.classList.remove('show-success');
+    gameFlag.textContent = flagEmoji(q.country.code);
 
     var promptText;
     if (currentMode === 'flags') promptText = 'Which country is this?';
@@ -1866,10 +1911,9 @@
   function showCorrectSuccess() {
     clearCorrectSuccessTimer();
     correctSuccessActive = true;
-    successCheck.classList.remove('visible');
-    void successCheck.offsetWidth;
-    successCheck.classList.add('visible');
-    successCheck.setAttribute('aria-hidden', 'false');
+    resetFlagPosition();
+    gameFlag.classList.add('show-success');
+    gameFlag.innerHTML = '<span class="success-badge">✓</span>';
 
     correctSuccessTimer = setTimeout(function () {
       dismissCorrectSuccess();
@@ -1880,8 +1924,7 @@
     if (!correctSuccessActive) return;
     correctSuccessActive = false;
     clearCorrectSuccessTimer();
-    successCheck.classList.remove('visible');
-    successCheck.setAttribute('aria-hidden', 'true');
+    gameFlag.classList.remove('show-success');
     nextQuestion();
   }
 
