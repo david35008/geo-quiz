@@ -809,11 +809,11 @@
       touch-action: none;
       grid-template-columns: minmax(22px, 7vw) minmax(56px, 15vw) 1fr minmax(56px, 15vw) minmax(22px, 7vw);
       grid-template-rows: auto auto auto;
-      row-gap: 4px;
+      row-gap: 2px;
       column-gap: 6px;
-      padding: 6px 8px 14px;
+      padding: 8px 8px 14px;
       position: relative;
-      align-content: end;
+      align-content: center;
       align-items: start;
       justify-items: center;
     }
@@ -853,11 +853,25 @@
     .side-label-left { grid-column: 1; grid-row: 2; }
     .side-label-right { grid-column: 5; grid-row: 2; }
 
-    #opt-up { grid-column: 2 / 5; grid-row: 1; writing-mode: horizontal-tb; align-self: end; }
+    #opt-up {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      writing-mode: horizontal-tb;
+      align-self: center;
+      justify-self: center;
+      width: min(100%, 420px);
+    }
     #opt-left { grid-column: 2; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
-    #game-flag { grid-column: 3; grid-row: 2; align-self: start; }
+    #game-flag { grid-column: 3; grid-row: 2; align-self: start; margin-top: -6px; }
     #opt-right { grid-column: 4; grid-row: 2; align-self: start; writing-mode: horizontal-tb; }
-    #opt-down { grid-column: 2 / 5; grid-row: 3; writing-mode: horizontal-tb; width: 100%; align-self: start; }
+    #opt-down {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      writing-mode: horizontal-tb;
+      width: min(100%, 420px);
+      align-self: start;
+      justify-self: center;
+    }
 
     /* Phone: sit flag + answers in the lower thumb zone */
     @media (max-width: 640px) {
@@ -882,11 +896,23 @@
       .game-area {
         grid-template-columns: minmax(20px, 6vw) minmax(48px, 14vw) 1fr minmax(48px, 14vw) minmax(20px, 6vw);
         grid-template-rows: auto auto auto;
-        row-gap: 4px;
+        row-gap: 2px;
         column-gap: 6px;
-        padding: 4px 8px 22px;
-        align-content: end;
+        padding: 4px 8px 48px;
+        align-content: center;
         align-items: start;
+      }
+
+      #opt-up {
+        width: min(100%, 280px);
+      }
+
+      #game-flag {
+        margin-top: -10px;
+      }
+
+      #opt-down {
+        width: min(100%, 280px);
       }
 
       .side-label {
@@ -918,8 +944,8 @@
       }
 
       .flag-center {
-        min-height: clamp(88px, 22vw, 140px);
-        font-size: min(34vw, 28vh, 10rem);
+        min-height: clamp(80px, 20vw, 128px);
+        font-size: min(32vw, 26vh, 10rem);
       }
 
       .swipe-hint {
@@ -971,8 +997,8 @@
       align-self: start;
       justify-self: center;
       width: 100%;
-      min-height: clamp(72px, 22vw, 140px);
-      max-height: min(34vw, 28vh);
+      min-height: clamp(64px, 20vw, 128px);
+      max-height: min(30vw, 24vh);
       display: flex;
       align-items: center;
       justify-content: center;
