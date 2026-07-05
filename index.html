@@ -193,6 +193,29 @@
     .mode-card:active { transform: scale(0.98); }
 
     .mode-card .mode-icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+    .mode-icon-flags {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0;
+      font-size: 1.85rem;
+      line-height: 1;
+      min-height: 2.75rem;
+    }
+
+    .mode-icon-flags .mode-flag {
+      margin-left: -0.28em;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+    }
+
+    .mode-icon-flags .mode-flag:first-child { margin-left: 0; }
+
+    .mode-icon-flags .mode-flag-center {
+      font-size: 2.35rem;
+      z-index: 2;
+      transform: translateY(-3px);
+    }
     .mode-card h2 { font-size: 1.25rem; margin-bottom: 4px; }
     .mode-card p { color: var(--text-muted); font-size: 0.9rem; }
     .mode-card .mode-stats {
@@ -775,7 +798,49 @@
     }
 
     .word-pick-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-height: min(62vh, 560px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 4px;
+    }
+
+    .word-pick-card h3 {
+      font-size: 0.98rem;
+      margin-bottom: 0;
+    }
+
+    .word-pick-card p,
+    .word-pick-card .route-stats,
+    .word-pick-card .route-resume-hint {
+      display: none;
+    }
+
+    .word-pick-card {
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .word-pick-search {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      border: 2px solid #2a3a4a;
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .word-pick-search:focus {
+      border-color: var(--primary);
+    }
+
+    .word-pick-count {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
     }
 
     .route-grid {
@@ -1466,7 +1531,13 @@
     </div>
     <div class="mode-grid">
       <div class="mode-card" data-mode="flags">
-        <div class="mode-icon">🏳️</div>
+        <div class="mode-icon mode-icon-flags" aria-hidden="true">
+          <span class="mode-flag">🇺🇸</span>
+          <span class="mode-flag">🇫🇷</span>
+          <span class="mode-flag mode-flag-center">🇮🇱</span>
+          <span class="mode-flag">🇬🇧</span>
+          <span class="mode-flag">🇯🇵</span>
+        </div>
         <h2>Flags</h2>
         <p>Build your streak — wrong answer resets to 0</p>
         <div class="mode-stats" id="stats-flags"></div>
@@ -1501,7 +1572,7 @@
       <div class="route-grid">
         <div class="route-card" data-words-style="fixed">
           <h3>✏️ Choose a word</h3>
-          <p>Pick hello, thank you, yes, no, or goodbye — then random or ordered countries</p>
+          <p>Pick one of 100 words — then random or ordered countries</p>
         </div>
         <div class="route-card" data-words-style="randomWords">
           <h3>🎲 Random words</h3>
@@ -1518,8 +1589,10 @@
       <button class="btn-home" id="word-pick-back" type="button">← Words</button>
       <div class="route-picker-header">
         <h2>Choose a word</h2>
-        <p>Then pick random or ordered countries</p>
+        <p>100 words · then random or ordered countries</p>
       </div>
+      <input class="word-pick-search" id="word-pick-search" type="search" placeholder="Search words..." autocomplete="off">
+      <p class="word-pick-count" id="word-pick-count"></p>
       <div class="route-grid word-pick-grid" id="word-pick-grid"></div>
     </div>
   </section>
@@ -1661,14 +1734,24 @@
     { id: 'map-pins', label: 'Pinned the map!' },
     { id: 'orbit', label: 'Orbiting Earth!' }
   ];
-  const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
-  const WORD_LABELS = {
-    hello: 'Hello',
-    thankYou: 'Thank you',
-    yes: 'Yes',
-    no: 'No',
-    goodbye: 'Goodbye'
-  };
+  
+  function buildWordKeysAndLabels() {
+    var vocab = [{"key":"hello","label":"Hello"},{"key":"thankYou","label":"Thank you"},{"key":"yes","label":"Yes"},{"key":"no","label":"No"},{"key":"goodbye","label":"Goodbye"},{"key":"please","label":"Please"},{"key":"sorry","label":"Sorry"},{"key":"excuseMe","label":"Excuse me"},{"key":"help","label":"Help"},{"key":"water","label":"Water"},{"key":"food","label":"Food"},{"key":"bathroom","label":"Bathroom"},{"key":"howMuch","label":"How much?"},{"key":"where","label":"Where?"},{"key":"when","label":"When?"},{"key":"what","label":"What?"},{"key":"who","label":"Who?"},{"key":"goodMorning","label":"Good morning"},{"key":"goodNight","label":"Good night"},{"key":"seeYouLater","label":"See you later"},{"key":"welcome","label":"Welcome"},{"key":"good","label":"Good"},{"key":"bad","label":"Bad"},{"key":"big","label":"Big"},{"key":"small","label":"Small"},{"key":"hot","label":"Hot"},{"key":"cold","label":"Cold"},{"key":"today","label":"Today"},{"key":"tomorrow","label":"Tomorrow"},{"key":"yesterday","label":"Yesterday"},{"key":"morning","label":"Morning"},{"key":"night","label":"Night"},{"key":"day","label":"Day"},{"key":"week","label":"Week"},{"key":"month","label":"Month"},{"key":"year","label":"Year"},{"key":"time","label":"Time"},{"key":"money","label":"Money"},{"key":"hotel","label":"Hotel"},{"key":"airport","label":"Airport"},{"key":"train","label":"Train"},{"key":"bus","label":"Bus"},{"key":"taxi","label":"Taxi"},{"key":"hospital","label":"Hospital"},{"key":"police","label":"Police"},{"key":"doctor","label":"Doctor"},{"key":"pharmacy","label":"Pharmacy"},{"key":"emergency","label":"Emergency"},{"key":"open","label":"Open"},{"key":"closed","label":"Closed"},{"key":"left","label":"Left"},{"key":"right","label":"Right"},{"key":"straight","label":"Straight"},{"key":"near","label":"Near"},{"key":"far","label":"Far"},{"key":"map","label":"Map"},{"key":"phone","label":"Phone"},{"key":"internet","label":"Internet"},{"key":"safe","label":"Safe"},{"key":"beautiful","label":"Beautiful"},{"key":"happy","label":"Happy"},{"key":"sad","label":"Sad"},{"key":"tired","label":"Tired"},{"key":"hungry","label":"Hungry"},{"key":"thirsty","label":"Thirsty"},{"key":"sick","label":"Sick"},{"key":"well","label":"Well / OK"},{"key":"child","label":"Child"},{"key":"man","label":"Man"},{"key":"woman","label":"Woman"},{"key":"boy","label":"Boy"},{"key":"girl","label":"Girl"},{"key":"mother","label":"Mother"},{"key":"father","label":"Father"},{"key":"brother","label":"Brother"},{"key":"sister","label":"Sister"},{"key":"house","label":"House"},{"key":"city","label":"City"},{"key":"countryWord","label":"Country"},{"key":"world","label":"World"},{"key":"sun","label":"Sun"},{"key":"rain","label":"Rain"},{"key":"dog","label":"Dog"},{"key":"cat","label":"Cat"},{"key":"one","label":"One"},{"key":"two","label":"Two"},{"key":"three","label":"Three"},{"key":"four","label":"Four"},{"key":"five","label":"Five"},{"key":"six","label":"Six"},{"key":"seven","label":"Seven"},{"key":"eight","label":"Eight"},{"key":"nine","label":"Nine"},{"key":"ten","label":"Ten"},{"key":"howAreYou","label":"How are you?"},{"key":"iDontUnderstand","label":"I don't understand"},{"key":"speakEnglish","label":"Do you speak English?"},{"key":"billPlease","label":"The bill, please"},{"key":"stop","label":"Stop"},{"key":"wait","label":"Wait"}];
+    return {
+      keys: vocab.map(function (v) { return v.key; }),
+      labels: vocab.reduce(function (acc, v) {
+        acc[v.key] = v.label;
+        return acc;
+      }, {})
+    };
+  }
+
+  var wordMeta = buildWordKeysAndLabels();
+  const WORD_KEYS = wordMeta.keys;
+  const WORD_LABELS = wordMeta.labels;
+  const LANG_PACKS = {"ar":{"hello":"Marhaba","thankYou":"Shukran","yes":"Na'am","no":"La","goodbye":"Ma'a salama","please":"Min fadlak","sorry":"Afwan","excuseMe":"Afwan","help":"Musaada","water":"Ma","food":"Taam","bathroom":"Hamam","howMuch":"Kam?","where":"Ayn?","when":"Mata?","what":"Ma?","who":"Man?","goodMorning":"Sabah al-khair","goodNight":"Tisba ala khair","seeYouLater":"Ma'a salama","welcome":"Ahlan","good":"Jayyid","bad":"Sayyi","big":"Kabir","small":"Saghir","hot":"Harr","cold":"Barid","today":"Al-yawm","tomorrow":"Ghadan","yesterday":"Ams","morning":"Sabah","night":"Layl","day":"Yawm","week":"Usbu","month":"Shahr","year":"Sanah","time":"Waqt","money":"Mal","hotel":"Funduq","airport":"Matār","train":"Qitar","bus":"Hafila","taxi":"Taxi","hospital":"Mustashfa","police":"Shurta","doctor":"Tabib","pharmacy":"Saydaliya","emergency":"Tawari","open":"Maftuh","closed":"Mughlaq","left":"Yasar","right":"Yamin","straight":"Ala tool","near":"Qarib","far":"Ba'id","map":"Khariṭa","phone":"Hatif","internet":"Internet","safe":"Amin","beautiful":"Jamil","happy":"Sa'id","sad":"Hazin","tired":"Muta'ab","hungry":"Jaa'","thirsty":"Atshan","sick":"Mariḍ","well":"Jayyid","child":"Tifl","man":"Rajul","woman":"Imra'a","boy":"Walad","girl":"Bint","mother":"Umm","father":"Ab","brother":"Akh","sister":"Ukht","house":"Bayt","city":"Madina","countryWord":"Balad","world":"Alam","sun":"Shams","rain":"Matar","dog":"Kalb","cat":"Qitta","one":"Wahid","two":"Ithnayn","three":"Thalatha","four":"Arba'a","five":"Khamsa","six":"Sitta","seven":"Sab'a","eight":"Thamaniya","nine":"Tis'a","ten":"Ashara","howAreYou":"Kayf halak?","iDontUnderstand":"La afham","speakEnglish":"Hal tatakalam inglizi?","billPlease":"Al-fatura min fadlak","stop":"Tawaqqaf","wait":"Intazir"},"de":{"hello":"Hallo","thankYou":"Danke","yes":"Ja","no":"Nein","goodbye":"Auf Wiedersehen","please":"Bitte","sorry":"Entschuldigung","excuseMe":"Entschuldigung","help":"Hilfe","water":"Wasser","food":"Essen","bathroom":"Toilette","howMuch":"Wie viel?","where":"Wo?","when":"Wann?","what":"Was?","who":"Wer?","goodMorning":"Guten Morgen","goodNight":"Gute Nacht","seeYouLater":"Bis später","welcome":"Willkommen","good":"Gut","bad":"Schlecht","big":"Groß","small":"Klein","hot":"Heiß","cold":"Kalt","today":"Heute","tomorrow":"Morgen","yesterday":"Gestern","morning":"Morgen","night":"Nacht","day":"Tag","week":"Woche","month":"Monat","year":"Jahr","time":"Zeit","money":"Geld","hotel":"Hotel","airport":"Flughafen","train":"Zug","bus":"Bus","taxi":"Taxi","hospital":"Krankenhaus","police":"Polizei","doctor":"Arzt","pharmacy":"Apotheke","emergency":"Notfall","open":"Geöffnet","closed":"Geschlossen","left":"Links","right":"Rechts","straight":"Geradeaus","near":"Nah","far":"Weit","map":"Karte","phone":"Telefon","internet":"Internet","safe":"Sicher","beautiful":"Schön","happy":"Glücklich","sad":"Traurig","tired":"Müde","hungry":"Hungrig","thirsty":"Durstig","sick":"Krank","well":"Gut","child":"Kind","man":"Mann","woman":"Frau","boy":"Junge","girl":"Mädchen","mother":"Mutter","father":"Vater","brother":"Bruder","sister":"Schwester","house":"Haus","city":"Stadt","countryWord":"Land","world":"Welt","sun":"Sonne","rain":"Regen","dog":"Hund","cat":"Katze","one":"Eins","two":"Zwei","three":"Drei","four":"Vier","five":"Fünf","six":"Sechs","seven":"Sieben","eight":"Acht","nine":"Neun","ten":"Zehn","howAreYou":"Wie geht es Ihnen?","iDontUnderstand":"Ich verstehe nicht","speakEnglish":"Sprechen Sie Englisch?","billPlease":"Die Rechnung, bitte","stop":"Stopp","wait":"Warten"},"el":{"hello":"Yassou","thankYou":"Efharistó","yes":"Ne","no":"Ochi","goodbye":"Antío","please":"Parakaló","sorry":"Signómi","excuseMe":"Parakaló","help":"Voítheia","water":"Neró","food":"Fagitó","bathroom":"Toualeta","howMuch":"Póso?","where":"Poú?","when":"Póte?","what":"Ti?","who":"Poios?","goodMorning":"Kaliméra","goodNight":"Kalinychta","seeYouLater":"Ta léme","welcome":"Kalósórises","good":"Kaló","bad":"Kakó","big":"Megálo","small":"Mikró","hot":"Zestó","cold":"Krýo","today":"Símera","tomorrow":"Avrio","yesterday":"Chthes","morning":"Proí","night":"Nychtá","day":"Méra","week":"Evdomáda","month":"Mínas","year":"Chronós","time":"Chronos","money":"Leftá","hotel":"Xenodocheío","airport":"Aerodrómio","train":"Treno","bus":"Leoforeío","taxi":"Taxi","hospital":"Nosokomeío","police":"Astynomía","doctor":"Giatrós","pharmacy":"Farmakeío","emergency":"Epeigón","open":"Anoichtó","closed":"Klistó","left":"Aristerá","right":"Deksia","straight":"Eutheia","near":"Kontá","far":"Makría","map":"Chártis","phone":"Tilefono","internet":"Internet","safe":"Asfalés","beautiful":"Ómorfo","happy":"Eftychisménos","sad":"Lypiménos","tired":"Kourasménos","hungry":"Peinasménos","thirsty":"Dipsasménos","sick":"Arrostos","well":"Kalá","child":"Paidí","man":"Andras","woman":"Gynaíka","boy":"Agóri","girl":"Korítsi","mother":"Mána","father":"Patéras","brother":"Adelfós","sister":"Adelfí","house":"Spíti","city":"Póli","countryWord":"Chóra","world":"Kósmos","sun":"Ilios","rain":"Vrochí","dog":"Skýlos","cat":"Gáta","one":"Ena","two":"Dio","three":"Tria","four":"Tessera","five":"Pente","six":"Eksi","seven":"Efta","eight":"Októ","nine":"Ennéa","ten":"Deka","howAreYou":"Ti kánete?","iDontUnderstand":"Den katalavaíno","speakEnglish":"Miláte angliká?","billPlease":"Ton logariasmó parakaló","stop":"Stamáta","wait":"Perímena"},"en":{"hello":"Hello","thankYou":"Thank you","yes":"Yes","no":"No","goodbye":"Goodbye","please":"Please","sorry":"Sorry","excuseMe":"Excuse me","help":"Help","water":"Water","food":"Food","bathroom":"Bathroom","howMuch":"How much?","where":"Where?","when":"When?","what":"What?","who":"Who?","goodMorning":"Good morning","goodNight":"Good night","seeYouLater":"See you later","welcome":"Welcome","good":"Good","bad":"Bad","big":"Big","small":"Small","hot":"Hot","cold":"Cold","today":"Today","tomorrow":"Tomorrow","yesterday":"Yesterday","morning":"Morning","night":"Night","day":"Day","week":"Week","month":"Month","year":"Year","time":"Time","money":"Money","hotel":"Hotel","airport":"Airport","train":"Train","bus":"Bus","taxi":"Taxi","hospital":"Hospital","police":"Police","doctor":"Doctor","pharmacy":"Pharmacy","emergency":"Emergency","open":"Open","closed":"Closed","left":"Left","right":"Right","straight":"Straight","near":"Near","far":"Far","map":"Map","phone":"Phone","internet":"Internet","safe":"Safe","beautiful":"Beautiful","happy":"Happy","sad":"Sad","tired":"Tired","hungry":"Hungry","thirsty":"Thirsty","sick":"Sick","well":"Well / OK","child":"Child","man":"Man","woman":"Woman","boy":"Boy","girl":"Girl","mother":"Mother","father":"Father","brother":"Brother","sister":"Sister","house":"House","city":"City","countryWord":"Country","world":"World","sun":"Sun","rain":"Rain","dog":"Dog","cat":"Cat","one":"One","two":"Two","three":"Three","four":"Four","five":"Five","six":"Six","seven":"Seven","eight":"Eight","nine":"Nine","ten":"Ten","howAreYou":"How are you?","iDontUnderstand":"I don't understand","speakEnglish":"Do you speak English?","billPlease":"The bill, please","stop":"Stop","wait":"Wait"},"es":{"hello":"Hola","thankYou":"Gracias","yes":"Sí","no":"No","goodbye":"Adiós","please":"Por favor","sorry":"Lo siento","excuseMe":"Disculpe","help":"Ayuda","water":"Agua","food":"Comida","bathroom":"Baño","howMuch":"¿Cuánto?","where":"¿Dónde?","when":"¿Cuándo?","what":"¿Qué?","who":"¿Quién?","goodMorning":"Buenos días","goodNight":"Buenas noches","seeYouLater":"Hasta luego","welcome":"Bienvenido","good":"Bueno","bad":"Malo","big":"Grande","small":"Pequeño","hot":"Caliente","cold":"Frío","today":"Hoy","tomorrow":"Mañana","yesterday":"Ayer","morning":"Mañana","night":"Noche","day":"Día","week":"Semana","month":"Mes","year":"Año","time":"Tiempo","money":"Dinero","hotel":"Hotel","airport":"Aeropuerto","train":"Tren","bus":"Autobús","taxi":"Taxi","hospital":"Hospital","police":"Policía","doctor":"Médico","pharmacy":"Farmacia","emergency":"Emergencia","open":"Abierto","closed":"Cerrado","left":"Izquierda","right":"Derecha","straight":"Recto","near":"Cerca","far":"Lejos","map":"Mapa","phone":"Teléfono","internet":"Internet","safe":"Seguro","beautiful":"Hermoso","happy":"Feliz","sad":"Triste","tired":"Cansado","hungry":"Hambre","thirsty":"Sed","sick":"Enfermo","well":"Bien","child":"Niño","man":"Hombre","woman":"Mujer","boy":"Niño","girl":"Niña","mother":"Madre","father":"Padre","brother":"Hermano","sister":"Hermana","house":"Casa","city":"Ciudad","countryWord":"País","world":"Mundo","sun":"Sol","rain":"Lluvia","dog":"Perro","cat":"Gato","one":"Uno","two":"Dos","three":"Tres","four":"Cuatro","five":"Cinco","six":"Seis","seven":"Siete","eight":"Ocho","nine":"Nueve","ten":"Diez","howAreYou":"¿Cómo estás?","iDontUnderstand":"No entiendo","speakEnglish":"¿Habla inglés?","billPlease":"La cuenta, por favor","stop":"Pare","wait":"Espere"},"fr":{"hello":"Bonjour","thankYou":"Merci","yes":"Oui","no":"Non","goodbye":"Au revoir","please":"S'il vous plaît","sorry":"Désolé","excuseMe":"Excusez-moi","help":"Aide","water":"Eau","food":"Nourriture","bathroom":"Toilettes","howMuch":"Combien?","where":"Où?","when":"Quand?","what":"Quoi?","who":"Qui?","goodMorning":"Bonjour","goodNight":"Bonne nuit","seeYouLater":"À plus tard","welcome":"Bienvenue","good":"Bon","bad":"Mauvais","big":"Grand","small":"Petit","hot":"Chaud","cold":"Froid","today":"Aujourd'hui","tomorrow":"Demain","yesterday":"Hier","morning":"Matin","night":"Nuit","day":"Jour","week":"Semaine","month":"Mois","year":"Année","time":"Temps","money":"Argent","hotel":"Hôtel","airport":"Aéroport","train":"Train","bus":"Bus","taxi":"Taxi","hospital":"Hôpital","police":"Police","doctor":"Médecin","pharmacy":"Pharmacie","emergency":"Urgence","open":"Ouvert","closed":"Fermé","left":"Gauche","right":"Droite","straight":"Tout droit","near":"Près","far":"Loin","map":"Carte","phone":"Téléphone","internet":"Internet","safe":"Sûr","beautiful":"Beau","happy":"Heureux","sad":"Triste","tired":"Fatigué","hungry":"Faim","thirsty":"Soif","sick":"Malade","well":"Bien","child":"Enfant","man":"Homme","woman":"Femme","boy":"Garçon","girl":"Fille","mother":"Mère","father":"Père","brother":"Frère","sister":"Sœur","house":"Maison","city":"Ville","countryWord":"Pays","world":"Monde","sun":"Soleil","rain":"Pluie","dog":"Chien","cat":"Chat","one":"Un","two":"Deux","three":"Trois","four":"Quatre","five":"Cinq","six":"Six","seven":"Sept","eight":"Huit","nine":"Neuf","ten":"Dix","howAreYou":"Comment allez-vous?","iDontUnderstand":"Je ne comprends pas","speakEnglish":"Parlez-vous anglais?","billPlease":"L'addition, s'il vous plaît","stop":"Arrêtez","wait":"Attendez"},"hi":{"hello":"Namaste","thankYou":"Dhanyavaad","yes":"Haan","no":"Nahin","goodbye":"Alvida","please":"Kripya","sorry":"Maaf kijiye","excuseMe":"Maaf kijiye","help":"Madad","water":"Paani","food":"Khana","bathroom":"Shauchalay","howMuch":"Kitna?","where":"Kahan?","when":"Kab?","what":"Kya?","who":"Kaun?","goodMorning":"Suprabhaat","goodNight":"Shubh ratri","seeYouLater":"Phir milenge","welcome":"Swagat","good":"Achha","bad":"Bura","big":"Bada","small":"Chota","hot":"Garam","cold":"Thanda","today":"Aaj","tomorrow":"Kal","yesterday":"Kal","morning":"Subah","night":"Raat","day":"Din","week":"Hafta","month":"Mahina","year":"Saal","time":"Samay","money":"Paisa","hotel":"Hotel","airport":"Hawai adda","train":"Train","bus":"Bus","taxi":"Taxi","hospital":"Aspatal","police":"Police","doctor":"Doctor","pharmacy":"Dawai ki dukaan","emergency":"Emergency","open":"Khula","closed":"Band","left":"Baen","right":"Daen","straight":"Seedha","near":"Paas","far":"Door","map":"Naqsha","phone":"Phone","internet":"Internet","safe":"Surakshit","beautiful":"Sundar","happy":"Khush","sad":"Udaas","tired":"Thaka","hungry":"Bhookh","thirsty":"Pyaas","sick":"Bimar","well":"Theek","child":"Bachcha","man":"Aadmi","woman":"Aurat","boy":"Ladka","girl":"Ladki","mother":"Maa","father":"Pita","brother":"Bhai","sister":"Behen","house":"Ghar","city":"Shehar","countryWord":"Desh","world":"Duniya","sun":"Suraj","rain":"Baarish","dog":"Kutta","cat":"Billi","one":"Ek","two":"Do","three":"Teen","four":"Chaar","five":"Paanch","six":"Chheh","seven":"Saat","eight":"Aath","nine":"Nau","ten":"Das","howAreYou":"Kaise hain?","iDontUnderstand":"Samajh nahi aaya","speakEnglish":"Kya aap angrezi bolte hain?","billPlease":"Bill dijiye","stop":"Ruko","wait":"Intezar karo"},"id":{"hello":"Selamat pagi","thankYou":"Terima kasih","yes":"Ya","no":"Tidak","goodbye":"Selamat tinggal","please":"Tolong","sorry":"Maaf","excuseMe":"Permisi","help":"Tolong","water":"Air","food":"Makanan","bathroom":"Kamar mandi","howMuch":"Berapa?","where":"Di mana?","when":"Kapan?","what":"Apa?","who":"Siapa?","goodMorning":"Selamat pagi","goodNight":"Selamat malam","seeYouLater":"Sampai jumpa","welcome":"Selamat datang","good":"Baik","bad":"Buruk","big":"Besar","small":"Kecil","hot":"Panas","cold":"Dingin","today":"Hari ini","tomorrow":"Besok","yesterday":"Kemarin","morning":"Pagi","night":"Malam","day":"Hari","week":"Minggu","month":"Bulan","year":"Tahun","time":"Waktu","money":"Uang","hotel":"Hotel","airport":"Bandara","train":"Kereta","bus":"Bus","taxi":"Taksi","hospital":"Rumah sakit","police":"Polisi","doctor":"Dokter","pharmacy":"Apotek","emergency":"Darurat","open":"Buka","closed":"Tutup","left":"Kiri","right":"Kanan","straight":"Lurus","near":"Dekat","far":"Jauh","map":"Peta","phone":"Telepon","internet":"Internet","safe":"Aman","beautiful":"Indah","happy":"Senang","sad":"Sedih","tired":"Lelah","hungry":"Lapar","thirsty":"Haus","sick":"Sakit","well":"Baik","child":"Anak","man":"Pria","woman":"Wanita","boy":"Anak laki","girl":"Anak perempuan","mother":"Ibu","father":"Ayah","brother":"Saudara","sister":"Saudari","house":"Rumah","city":"Kota","countryWord":"Negara","world":"Dunia","sun":"Matahari","rain":"Hujan","dog":"Anjing","cat":"Kucing","one":"Satu","two":"Dua","three":"Tiga","four":"Empat","five":"Lima","six":"Enam","seven":"Tujuh","eight":"Delapan","nine":"Sembilan","ten":"Sepuluh","howAreYou":"Apa kabar?","iDontUnderstand":"Saya tidak mengerti","speakEnglish":"Bisa bahasa Inggris?","billPlease":"Minta bon","stop":"Berhenti","wait":"Tunggu"},"it":{"hello":"Ciao","thankYou":"Grazie","yes":"Sì","no":"No","goodbye":"Arrivederci","please":"Per favore","sorry":"Mi dispiace","excuseMe":"Scusi","help":"Aiuto","water":"Acqua","food":"Cibo","bathroom":"Bagno","howMuch":"Quanto?","where":"Dove?","when":"Quando?","what":"Cosa?","who":"Chi?","goodMorning":"Buongiorno","goodNight":"Buonanotte","seeYouLater":"A dopo","welcome":"Benvenuto","good":"Buono","bad":"Cattivo","big":"Grande","small":"Piccolo","hot":"Caldo","cold":"Freddo","today":"Oggi","tomorrow":"Domani","yesterday":"Ieri","morning":"Mattina","night":"Notte","day":"Giorno","week":"Settimana","month":"Mese","year":"Anno","time":"Tempo","money":"Soldi","hotel":"Hotel","airport":"Aeroporto","train":"Treno","bus":"Autobus","taxi":"Taxi","hospital":"Ospedale","police":"Polizia","doctor":"Dottore","pharmacy":"Farmacia","emergency":"Emergenza","open":"Aperto","closed":"Chiuso","left":"Sinistra","right":"Destra","straight":"Dritto","near":"Vicino","far":"Lontano","map":"Mappa","phone":"Telefono","internet":"Internet","safe":"Sicuro","beautiful":"Bello","happy":"Felice","sad":"Triste","tired":"Stanco","hungry":"Fame","thirsty":"Sete","sick":"Malato","well":"Bene","child":"Bambino","man":"Uomo","woman":"Donna","boy":"Ragazzo","girl":"Ragazza","mother":"Madre","father":"Padre","brother":"Fratello","sister":"Sorella","house":"Casa","city":"Città","countryWord":"Paese","world":"Mondo","sun":"Sole","rain":"Pioggia","dog":"Cane","cat":"Gatto","one":"Uno","two":"Due","three":"Tre","four":"Quattro","five":"Cinque","six":"Sei","seven":"Sette","eight":"Otto","nine":"Nove","ten":"Dieci","howAreYou":"Come sta?","iDontUnderstand":"Non capisco","speakEnglish":"Parla inglese?","billPlease":"Il conto, per favore","stop":"Fermati","wait":"Aspetta"},"ja":{"hello":"Konnichiwa","thankYou":"Arigatō","yes":"Hai","no":"Iie","goodbye":"Sayōnara","please":"Onegaishimasu","sorry":"Gomen nasai","excuseMe":"Sumimasen","help":"Tasukete","water":"Mizu","food":"Tabemono","bathroom":"Toire","howMuch":"Ikura?","where":"Doko?","when":"Itsu?","what":"Nani?","who":"Dare?","goodMorning":"Ohayō","goodNight":"Oyasumi","seeYouLater":"Mata ne","welcome":"Yōkoso","good":"Ii","bad":"Warui","big":"Ōkii","small":"Chiisai","hot":"Atsui","cold":"Samui","today":"Kyō","tomorrow":"Ashita","yesterday":"Kinō","morning":"Asa","night":"Yoru","day":"Hi","week":"Shū","month":"Tsuki","year":"Toshi","time":"Jikan","money":"Okane","hotel":"Hoteru","airport":"Kūkō","train":"Densha","bus":"Basu","taxi":"Takushī","hospital":"Byōin","police":"Keisatsu","doctor":"Isha","pharmacy":"Yakkyoku","emergency":"Kinkyū","open":"Aite iru","closed":"Shimatte iru","left":"Hidari","right":"Migi","straight":"Massugu","near":"Chikai","far":"Tōi","map":"Chizu","phone":"Denwa","internet":"Intānetto","safe":"Anzen","beautiful":"Utsukushii","happy":"Shiawase","sad":"Kanashii","tired":"Tsukareta","hungry":"Onaka suita","thirsty":"Nodo ga kawaita","sick":"Byōki","well":"Genki","child":"Kodomo","man":"Otoko","woman":"Onna","boy":"Shōnen","girl":"Shōjo","mother":"Haha","father":"Chichi","brother":"Ani","sister":"Imōto","house":"Ie","city":"Toshi","countryWord":"Kuni","world":"Sekai","sun":"Taiyō","rain":"Ame","dog":"Inu","cat":"Neko","one":"Ichi","two":"Ni","three":"San","four":"Yon","five":"Go","six":"Roku","seven":"Nana","eight":"Hachi","nine":"Kyū","ten":"Jū","howAreYou":"Ogenki desu ka?","iDontUnderstand":"Wakarimasen","speakEnglish":"Eigo wo hanashimasu ka?","billPlease":"Okaikei onegaishimasu","stop":"Tomare","wait":"Matte"},"ko":{"hello":"Annyeonghaseyo","thankYou":"Gamsahamnida","yes":"Ne","no":"Aniyo","goodbye":"Annyeonghi gaseyo","please":"Juseyo","sorry":"Joesonghamnida","excuseMe":"Sillyehamnida","help":"Dowajuseyo","water":"Mul","food":"Eumshik","bathroom":"Hwajangsil","howMuch":"Eolma?","where":"Eodi?","when":"Eonje?","what":"Mueo?","who":"Nugu?","goodMorning":"Annyeonghaseyo","goodNight":"Annyeonghi jumuseyo","seeYouLater":"Najung-e bwa","welcome":"Hwanyeonghamnida","good":"Joh-a","bad":"Nap-pa","big":"Keu","small":"Jak-a","hot":"Deoweo","cold":"Chagawo","today":"Oneul","tomorrow":"Naeil","yesterday":"Eoje","morning":"Achim","night":"Bam","day":"Nal","week":"Ju","month":"Dal","year":"Nyeon","time":"Sigan","money":"Don","hotel":"Hotel","airport":"Gonghang","train":"Gicha","bus":"Beoseu","taxi":"Taeksi","hospital":"Byeongwon","police":"Gyeongchal","doctor":"Uisa","pharmacy":"Yakguk","emergency":"Geup","open":"Yeollim","closed":"Eum","left":"Oenjjok","right":"Oreunjjok","straight":"Jjok","near":"Gakkawo","far":"Meol-eo","map":"Jido","phone":"Jeonhwa","internet":"Inteonet","safe":"Anjeon","beautiful":"Areumdawo","happy":"Haengbok","sad":"Seulpeo","tired":"Pigon","hungry":"Baegopeo","thirsty":"Mogmalla","sick":"Apa","well":"Joheun","child":"Ai","man":"Namja","woman":"Yeoja","boy":"Sonyeon","girl":"Sonyeo","mother":"Eomma","father":"Appa","brother":"Hyung","sister":"Nuna","house":"Jib","city":"Dosi","countryWord":"Nara","world":"Segye","sun":"Hae","rain":"Bi","dog":"Gae","cat":"Goyang-i","one":"Hana","two":"Dul","three":"Set","four":"Net","five":"Daseot","six":"Yeoseot","seven":"Ilgop","eight":"Yeodeol","nine":"Ahop","ten":"Yeol","howAreYou":"Eotteoke jinaeseyo?","iDontUnderstand":"Ihae mothaeyo","speakEnglish":"Yeong-eo haseyo?","billPlease":"Gyesanseo juseyo","stop":"Seoy","wait":"Gidaryeo"},"nl":{"hello":"Hallo","thankYou":"Dank je","yes":"Ja","no":"Nee","goodbye":"Tot ziens","please":"Alsjeblieft","sorry":"Sorry","excuseMe":"Pardon","help":"Help","water":"Water","food":"Eten","bathroom":"Toilet","howMuch":"Hoeveel?","where":"Waar?","when":"Wanneer?","what":"Wat?","who":"Wie?","goodMorning":"Goedemorgen","goodNight":"Welterusten","seeYouLater":"Tot later","welcome":"Welkom","good":"Goed","bad":"Slecht","big":"Groot","small":"Klein","hot":"Heet","cold":"Koud","today":"Vandaag","tomorrow":"Morgen","yesterday":"Gisteren","morning":"Ochtend","night":"Nacht","day":"Dag","week":"Week","month":"Maand","year":"Jaar","time":"Tijd","money":"Geld","hotel":"Hotel","airport":"Luchthaven","train":"Trein","bus":"Bus","taxi":"Taxi","hospital":"Ziekenhuis","police":"Politie","doctor":"Arts","pharmacy":"Apotheek","emergency":"Noodgeval","open":"Open","closed":"Gesloten","left":"Links","right":"Rechts","straight":"Recht door","near":"Dichtbij","far":"Ver","map":"Kaart","phone":"Telefoon","internet":"Internet","safe":"Veilig","beautiful":"Mooi","happy":"Blij","sad":"Verdrietig","tired":"Moe","hungry":"Honger","thirsty":"Dorst","sick":"Ziek","well":"Goed","child":"Kind","man":"Man","woman":"Vrouw","boy":"Jongen","girl":"Meisje","mother":"Moeder","father":"Vader","brother":"Broer","sister":"Zus","house":"Huis","city":"Stad","countryWord":"Land","world":"Wereld","sun":"Zon","rain":"Regen","dog":"Hond","cat":"Kat","one":"Een","two":"Twee","three":"Drie","four":"Vier","five":"Vijf","six":"Zes","seven":"Zeven","eight":"Acht","nine":"Negen","ten":"Tien","howAreYou":"Hoe gaat het?","iDontUnderstand":"Ik begrijp het niet","speakEnglish":"Spreekt u Engels?","billPlease":"De rekening alstublieft","stop":"Stop","wait":"Wacht"},"pl":{"hello":"Dzień dobry","thankYou":"Dziękuję","yes":"Tak","no":"Nie","goodbye":"Do widzenia","please":"Proszę","sorry":"Przepraszam","excuseMe":"Przepraszam","help":"Pomoc","water":"Woda","food":"Jedzenie","bathroom":"Toaleta","howMuch":"Ile?","where":"Gdzie?","when":"Kiedy?","what":"Co?","who":"Kto?","goodMorning":"Dzień dobry","goodNight":"Dobranoc","seeYouLater":"Do zobaczenia","welcome":"Witamy","good":"Dobry","bad":"Zły","big":"Duży","small":"Mały","hot":"Gorąco","cold":"Zimno","today":"Dziś","tomorrow":"Jutro","yesterday":"Wczoraj","morning":"Rano","night":"Noc","day":"Dzień","week":"Tydzień","month":"Miesiąc","year":"Rok","time":"Czas","money":"Pieniądze","hotel":"Hotel","airport":"Lotnisko","train":"Pociąg","bus":"Autobus","taxi":"Taksówka","hospital":"Szpital","police":"Policja","doctor":"Lekarz","pharmacy":"Apteka","emergency":"Nagły wypadek","open":"Otwarte","closed":"Zamknięte","left":"Lewo","right":"Prawo","straight":"Prosto","near":"Blisko","far":"Daleko","map":"Mapa","phone":"Telefon","internet":"Internet","safe":"Bezpiecznie","beautiful":"Piękny","happy":"Szczęśliwy","sad":"Smutny","tired":"Zmęczony","hungry":"Głodny","thirsty":"Spragniony","sick":"Chory","well":"Dobrze","child":"Dziecko","man":"Mężczyzna","woman":"Kobieta","boy":"Chłopiec","girl":"Dziewczyna","mother":"Matka","father":"Ojciec","brother":"Brat","sister":"Siostra","house":"Dom","city":"Miasto","countryWord":"Kraj","world":"Świat","sun":"Słońce","rain":"Deszcz","dog":"Pies","cat":"Kot","one":"Jeden","two":"Dwa","three":"Trzy","four":"Cztery","five":"Pięć","six":"Sześć","seven":"Siedem","eight":"Osiem","nine":"Dziewięć","ten":"Dziesięć","howAreYou":"Jak się masz?","iDontUnderstand":"Nie rozumiem","speakEnglish":"Czy mówisz po angielsku?","billPlease":"Rachunek poproszę","stop":"Stop","wait":"Czekaj"},"pt":{"hello":"Olá","thankYou":"Obrigado","yes":"Sim","no":"Não","goodbye":"Adeus","please":"Por favor","sorry":"Desculpe","excuseMe":"Com licença","help":"Ajuda","water":"Água","food":"Comida","bathroom":"Banheiro","howMuch":"Quanto?","where":"Onde?","when":"Quando?","what":"O quê?","who":"Quem?","goodMorning":"Bom dia","goodNight":"Boa noite","seeYouLater":"Até logo","welcome":"Bem-vindo","good":"Bom","bad":"Mau","big":"Grande","small":"Pequeno","hot":"Quente","cold":"Frio","today":"Hoje","tomorrow":"Amanhã","yesterday":"Ontem","morning":"Manhã","night":"Noite","day":"Dia","week":"Semana","month":"Mês","year":"Ano","time":"Tempo","money":"Dinheiro","hotel":"Hotel","airport":"Aeroporto","train":"Trem","bus":"Ônibus","taxi":"Táxi","hospital":"Hospital","police":"Polícia","doctor":"Médico","pharmacy":"Farmácia","emergency":"Emergência","open":"Aberto","closed":"Fechado","left":"Esquerda","right":"Direita","straight":"Em frente","near":"Perto","far":"Longe","map":"Mapa","phone":"Telefone","internet":"Internet","safe":"Seguro","beautiful":"Bonito","happy":"Feliz","sad":"Triste","tired":"Cansado","hungry":"Fome","thirsty":"Sede","sick":"Doente","well":"Bem","child":"Criança","man":"Homem","woman":"Mulher","boy":"Menino","girl":"Menina","mother":"Mãe","father":"Pai","brother":"Irmão","sister":"Irmã","house":"Casa","city":"Cidade","countryWord":"País","world":"Mundo","sun":"Sol","rain":"Chuva","dog":"Cão","cat":"Gato","one":"Um","two":"Dois","three":"Três","four":"Quatro","five":"Cinco","six":"Seis","seven":"Sete","eight":"Oito","nine":"Nove","ten":"Dez","howAreYou":"Como está?","iDontUnderstand":"Não entendo","speakEnglish":"Fala inglês?","billPlease":"A conta, por favor","stop":"Pare","wait":"Espere"},"ro":{"hello":"Bună","thankYou":"Mulțumesc","yes":"Da","no":"Nu","goodbye":"La revedere","please":"Vă rog","sorry":"Îmi pare rău","excuseMe":"Scuzați-mă","help":"Ajutor","water":"Apă","food":"Mâncare","bathroom":"Toaletă","howMuch":"Cât?","where":"Unde?","when":"Când?","what":"Ce?","who":"Cine?","goodMorning":"Bună dimineața","goodNight":"Noapte bună","seeYouLater":"Pe curând","welcome":"Bun venit","good":"Bun","bad":"Rău","big":"Mare","small":"Mic","hot":"Fierbinte","cold":"Rece","today":"Astăzi","tomorrow":"Mâine","yesterday":"Ieri","morning":"Dimineață","night":"Noapte","day":"Zi","week":"Săptămână","month":"Lună","year":"An","time":"Timp","money":"Bani","hotel":"Hotel","airport":"Aeroport","train":"Tren","bus":"Autobuz","taxi":"Taxi","hospital":"Spital","police":"Poliție","doctor":"Doctor","pharmacy":"Farmacie","emergency":"Urgență","open":"Deschis","closed":"Închis","left":"Stânga","right":"Dreapta","straight":"Înainte","near":"Aproape","far":"Departe","map":"Hartă","phone":"Telefon","internet":"Internet","safe":"Sigur","beautiful":"Frumos","happy":"Fericit","sad":"Trist","tired":"Obosit","hungry":"Foame","thirsty":"Sete","sick":"Bolnav","well":"Bine","child":"Copil","man":"Bărbat","woman":"Femeie","boy":"Băiat","girl":"Fată","mother":"Mamă","father":"Tată","brother":"Frate","sister":"Soră","house":"Casă","city":"Oraș","countryWord":"Țară","world":"Lume","sun":"Soare","rain":"Ploaie","dog":"Câine","cat":"Pisică","one":"Unu","two":"Doi","three":"Trei","four":"Patru","five":"Cinci","six":"Șase","seven":"Șapte","eight":"Opt","nine":"Nouă","ten":"Zece","howAreYou":"Ce mai faceți?","iDontUnderstand":"Nu înțeleg","speakEnglish":"Vorbiți engleză?","billPlease":"Nota vă rog","stop":"Stop","wait":"Așteptați"},"ru":{"hello":"Privet","thankYou":"Spasibo","yes":"Da","no":"Net","goodbye":"Do svidaniya","please":" Pozhaluysta","sorry":"Izvinite","excuseMe":"Izvinite","help":"Pomoshch","water":"Voda","food":"Eda","bathroom":"Tualet","howMuch":"Skolko?","where":"Gde?","when":"Kogda?","what":"Chto?","who":"Kto?","goodMorning":"Dobroe utro","goodNight":"Spokoynoy nochi","seeYouLater":"Do vstrechi","welcome":"Dobro pozhalovat","good":"Khorosho","bad":"Plokho","big":"Bolshoy","small":"Malenky","hot":"Zharko","cold":"Kholodno","today":"Segodnya","tomorrow":"Zavtra","yesterday":"Vchera","morning":"Utro","night":"Noch","day":"Den","week":"Nedelya","month":"Mesyats","year":"God","time":"Vremya","money":"Dengi","hotel":"Otel","airport":"Aeroport","train":"Poezd","bus":"Avtobus","taxi":"Taksi","hospital":"Bol'nitsa","police":"Politsiya","doctor":"Vrach","pharmacy":"Apteka","emergency":"Srochno","open":"Otkryto","closed":"Zakryto","left":"Nalevo","right":"Napravо","straight":"Pryamo","near":"Blizko","far":"Daleko","map":"Karta","phone":"Telefon","internet":"Internet","safe":"Bezopasno","beautiful":"Krasivo","happy":"Schastliv","sad":"Grustno","tired":"Ustal","hungry":"Goloden","thirsty":"Khochu pit","sick":"Bolen","well":"Khorosho","child":"Rebenok","man":"Muzhchina","woman":"Zhenshchina","boy":"Malchik","girl":"Devochka","mother":"Mat","father":"Otets","brother":"Brat","sister":"Sestra","house":"Dom","city":"Gorod","countryWord":"Strana","world":"Mir","sun":"Solntse","rain":"Dozhd","dog":"Sobaka","cat":"Koshka","one":"Odin","two":"Dva","three":"Tri","four":"Chetyre","five":"Pyat","six":"Shest","seven":"Sem","eight":"Vosem","nine":"Devyat","ten":"Desyat","howAreYou":"Kak dela?","iDontUnderstand":"Ya ne ponimayu","speakEnglish":"Vy govorite po-angliyski?","billPlease":"Schet, pozhaluysta","stop":"Stop","wait":"Podozhdite"},"sv":{"hello":"Hej","thankYou":"Tack","yes":"Ja","no":"Nej","goodbye":"Hej då","please":"Snälla","sorry":"Förlåt","excuseMe":"Ursäkta","help":"Hjälp","water":"Vatten","food":"Mat","bathroom":"Toalett","howMuch":"Hur mycket?","where":"Var?","when":"När?","what":"Vad?","who":"Vem?","goodMorning":"God morgon","goodNight":"God natt","seeYouLater":"Vi ses","welcome":"Välkommen","good":"Bra","bad":"Dålig","big":"Stor","small":"Liten","hot":"Het","cold":"Kall","today":"Idag","tomorrow":"Imorgon","yesterday":"Igår","morning":"Morgon","night":"Natt","day":"Dag","week":"Vecka","month":"Månad","year":"År","time":"Tid","money":"Pengar","hotel":"Hotell","airport":"Flygplats","train":"Tåg","bus":"Buss","taxi":"Taxi","hospital":"Sjukhus","police":"Polis","doctor":"Läkare","pharmacy":"Apotek","emergency":"Nödsituation","open":"Öppet","closed":"Stängt","left":"Vänster","right":"Höger","straight":"Rakt fram","near":"Nära","far":"Långt","map":"Karta","phone":"Telefon","internet":"Internet","safe":"Säker","beautiful":"Vacker","happy":"Glad","sad":"Ledsen","tired":"Trött","hungry":"Hungrig","thirsty":"Törstig","sick":"Sjuk","well":"Bra","child":"Barn","man":"Man","woman":"Kvinna","boy":"Pojke","girl":"Flicka","mother":"Mor","father":"Far","brother":"Bror","sister":"Syster","house":"Hus","city":"Stad","countryWord":"Land","world":"Värld","sun":"Sol","rain":"Regn","dog":"Hund","cat":"Katt","one":"Ett","two":"Två","three":"Tre","four":"Fyra","five":"Fem","six":"Sex","seven":"Sju","eight":"Åtta","nine":"Nio","ten":"Tio","howAreYou":"Hur mår du?","iDontUnderstand":"Jag förstår inte","speakEnglish":"Talar du engelska?","billPlease":"Notan tack","stop":"Stopp","wait":"Vänta"},"th":{"hello":"Sawatdi","thankYou":"Khop khun","yes":"Chai","no":"Mai chai","goodbye":"La kon","please":"Karuna","sorry":"Khothot","excuseMe":"Khothot","help":"Chuay","water":"Nam","food":"Aharn","bathroom":"Hong nam","howMuch":"Tao rai?","where":"Yoo tee nai?","when":"Muea rai?","what":"A rai?","who":"Khrai?","goodMorning":"Sawatdi","goodNight":"Ratri sawat","seeYouLater":"Laew phob gan","welcome":"Yindee ton rub","good":"Di","bad":"Mai di","big":"Yai","small":"Lek","hot":"Ron","cold":"Nao","today":"Wan ni","tomorrow":"Phrueang ni","yesterday":"Muea wan","morning":"Chao","night":"Klang khuen","day":"Wan","week":"Sapdah","month":"Duean","year":"Pi","time":"Wela","money":"Ngern","hotel":"Rong raem","airport":"Sanam bin","train":"Rot fai","bus":"Rot me","taxi":"Taxi","hospital":"Rong phayaban","police":"Tamruat","doctor":"Mor","pharmacy":"Rhan ya","emergency":"Chuk cheun","open":"Pood","closed":"Pit","left":"Sai","right":"Khwa","straight":"Trong","near":"Glai","far":"Glai","map":"Paen thi ti","phone":"Torasap","internet":"Internet","safe":"Pai di","beautiful":"Suay","happy":"Dee jai","sad":"Sia jai","tired":"Nuey","hungry":"Hiu","thirsty":"Hua","sick":"Poo","well":"Sabai di","child":"Dek","man":"Phu chai","woman":"Phu ying","boy":"Dek chai","girl":"Dek ying","mother":"Mae","father":"Pho","brother":"Phii chai","sister":"Nong sao","house":"Ban","city":"Mueang","countryWord":"Prathet","world":"Lok","sun":"Phra athit","rain":"Fon","dog":"Ma","cat":"Maew","one":"Neung","two":"Song","three":"Sam","four":"Si","five":"Ha","six":"Hok","seven":"Chet","eight":"Paet","nine":"Kao","ten":"Sip","howAreYou":"Sabai di mai?","iDontUnderstand":"Mai khao jai","speakEnglish":"Pood anggrit dai mai?","billPlease":"Chek bin duay","stop":"Yut","wait":"Ror"},"tr":{"hello":"Merhaba","thankYou":"Teşekkürler","yes":"Evet","no":"Hayır","goodbye":"Hoşça kal","please":"Lütfen","sorry":"Özür dilerim","excuseMe":"Affedersiniz","help":"Yardım","water":"Su","food":"Yemek","bathroom":"Tuvalet","howMuch":"Ne kadar?","where":"Nerede?","when":"Ne zaman?","what":"Ne?","who":"Kim?","goodMorning":"Günaydın","goodNight":"İyi geceler","seeYouLater":"Görüşürüz","welcome":"Hoş geldiniz","good":"İyi","bad":"Kötü","big":"Büyük","small":"Küçük","hot":"Sıcak","cold":"Soğuk","today":"Bugün","tomorrow":"Yarın","yesterday":"Dün","morning":"Sabah","night":"Gece","day":"Gün","week":"Hafta","month":"Ay","year":"Yıl","time":"Zaman","money":"Para","hotel":"Otel","airport":"Havalimanı","train":"Tren","bus":"Otobüs","taxi":"Taksi","hospital":"Hastane","police":"Polis","doctor":"Doktor","pharmacy":"Eczane","emergency":"Acil","open":"Açık","closed":"Kapalı","left":"Sol","right":"Sağ","straight":"Düz","near":"Yakın","far":"Uzak","map":"Harita","phone":"Telefon","internet":"İnternet","safe":"Güvenli","beautiful":"Güzel","happy":"Mutlu","sad":"Üzgün","tired":"Yorgun","hungry":"Aç","thirsty":"Susuz","sick":"Hasta","well":"İyi","child":"Çocuk","man":"Adam","woman":"Kadın","boy":"Erkek çocuk","girl":"Kız çocuk","mother":"Anne","father":"Baba","brother":"Erkek kardeş","sister":"Kız kardeş","house":"Ev","city":"Şehir","countryWord":"Ülke","world":"Dünya","sun":"Güneş","rain":"Yağmur","dog":"Köpek","cat":"Kedi","one":"Bir","two":"İki","three":"Üç","four":"Dört","five":"Beş","six":"Altı","seven":"Yedi","eight":"Sekiz","nine":"Dokuz","ten":"On","howAreYou":"Nasılsınız?","iDontUnderstand":"Anlamıyorum","speakEnglish":"İngilizce biliyor musunuz?","billPlease":"Hesap lütfen","stop":"Dur","wait":"Bekle"},"vi":{"hello":"Xin chào","thankYou":"Cảm ơn","yes":"Vâng","no":"Không","goodbye":"Tạm biệt","please":"Làm ơn","sorry":"Xin lỗi","excuseMe":"Xin lỗi","help":"Giúp","water":"Nước","food":"Thức ăn","bathroom":"Nhà vệ sinh","howMuch":"Bao nhiêu?","where":"Ở đâu?","when":"Khi nào?","what":"Gì?","who":"Ai?","goodMorning":"Chào buổi sáng","goodNight":"Chúc ngủ ngon","seeYouLater":"Hẹn gặp lại","welcome":"Chào mừng","good":"Tốt","bad":"Xấu","big":"Lớn","small":"Nhỏ","hot":"Nóng","cold":"Lạnh","today":"Hôm nay","tomorrow":"Ngày mai","yesterday":"Hôm qua","morning":"Buổi sáng","night":"Đêm","day":"Ngày","week":"Tuần","month":"Tháng","year":"Năm","time":"Thời gian","money":"Tiền","hotel":"Khách sạn","airport":"Sân bay","train":"Tàu hỏa","bus":"Xe buýt","taxi":"Taxi","hospital":"Bệnh viện","police":"Cảnh sát","doctor":"Bác sĩ","pharmacy":"Nhà thuốc","emergency":"Khẩn cấp","open":"Mở","closed":"Đóng","left":"Trái","right":"Phải","straight":"Thẳng","near":"Gần","far":"Xa","map":"Bản đồ","phone":"Điện thoại","internet":"Internet","safe":"An toàn","beautiful":"Đẹp","happy":"Vui","sad":"Buồn","tired":"Mệt","hungry":"Đói","thirsty":"Khát","sick":"Ốm","well":"Khỏe","child":"Trẻ em","man":"Đàn ông","woman":"Phụ nữ","boy":"Con trai","girl":"Con gái","mother":"Mẹ","father":"Cha","brother":"Anh em","sister":"Chị em","house":"Nhà","city":"Thành phố","countryWord":"Đất nước","world":"Thế giới","sun":"Mặt trời","rain":"Mưa","dog":"Chó","cat":"Mèo","one":"Một","two":"Hai","three":"Ba","four":"Bốn","five":"Năm","six":"Sáu","seven":"Bảy","eight":"Tám","nine":"Chín","ten":"Mười","howAreYou":"Khỏe không?","iDontUnderstand":"Tôi không hiểu","speakEnglish":"Bạn có nói tiếng Anh không?","billPlease":"Tính tiền","stop":"Dừng","wait":"Đợi"},"zh":{"hello":"Nǐ hǎo","thankYou":"Xièxiè","yes":"Shì","no":"Bù","goodbye":"Zàijiàn","please":"Qǐng","sorry":"Duìbuqǐ","excuseMe":"Duìbuqǐ","help":"Bāngzhù","water":"Shuǐ","food":"Shíwù","bathroom":"Cèsuǒ","howMuch":"Duōshǎo?","where":"Nǎlǐ?","when":"Shénme shíhou?","what":"Shénme?","who":"Shéi?","goodMorning":"Zǎoān","goodNight":"Wǎn'ān","seeYouLater":"Huítóu jiàn","welcome":"Huānyíng","good":"Hǎo","bad":"Huài","big":"Dà","small":"Xiǎo","hot":"Rè","cold":"Lěng","today":"Jīntiān","tomorrow":"Míngtiān","yesterday":"Zuótiān","morning":"Zǎochén","night":"Yèwǎn","day":"Tiān","week":"Xīngqī","month":"Yuè","year":"Nián","time":"Shíjiān","money":"Qián","hotel":"Jiǔdiàn","airport":"Jīchǎng","train":"Huǒchē","bus":"Gōngjiāo","taxi":"Chūzūchē","hospital":"Yīyuàn","police":"Jǐngchá","doctor":"Yīshēng","pharmacy":"Yàodiàn","emergency":"Jǐnjí","open":"Kāizhe","closed":"Guānmén","left":"Zuǒ","right":"Yòu","straight":"Zhízǒu","near":"Jìn","far":"Yuǎn","map":"Dìtú","phone":"Diànhuà","internet":"Hùliánwǎng","safe":"Ānquán","beautiful":"Piàoliang","happy":"Kuàilè","sad":"Nánguò","tired":"Lèi","hungry":"È","thirsty":"Kě","sick":"Bìng","well":"Hǎo","child":"Háizi","man":"Nánrén","woman":"Nǚrén","boy":"Nánhái","girl":"Nǚhái","mother":"Māma","father":"Bàba","brother":"Xiōngdì","sister":"Jiěmèi","house":"Fángzi","city":"Chéngshì","countryWord":"Guójiā","world":"Shìjiè","sun":"Tàiyáng","rain":"Yǔ","dog":"Gǒu","cat":"Māo","one":"Yī","two":"Èr","three":"Sān","four":"Sì","five":"Wǔ","six":"Liù","seven":"Qī","eight":"Bā","nine":"Jiǔ","ten":"Shí","howAreYou":"Nǐ hǎo ma?","iDontUnderstand":"Wǒ tīng bù dǒng","speakEnglish":"Nǐ huì shuō Yīngyǔ ma?","billPlease":"Mǎidān","stop":"Tíng","wait":"Děngdeng"}};
+  const COUNTRY_LANG = {"AF":"fa","AL":"sq","DZ":"ar","AD":"es","AO":"pt","AG":"en","AR":"es","AM":"hy","AU":"en","AT":"de","AZ":"ru","BS":"en","BH":"ar","BD":"bn","BB":"en","BY":"ru","BE":"fr","BZ":"en","BJ":"fr","BT":"dz","BO":"es","BA":"hr","BW":"en","BR":"pt","BN":"id","BG":"bg","BF":"fr","BI":"fr","KH":"km","CM":"en","CA":"en","CV":"pt","CF":"fr","TD":"fr","CL":"es","CN":"zh","CO":"es","KM":"fr","CG":"fr","CR":"es","HR":"en","CU":"es","CY":"el","CZ":"cs","CD":"fr","DK":"da","DJ":"fr","DM":"en","DO":"es","EC":"es","EG":"ar","SV":"es","GQ":"fr","ER":"en","EE":"et","SZ":"en","ET":"en","FJ":"en","FI":"no","FR":"fr","GA":"fr","GM":"en","GE":"en","DE":"de","GH":"en","GR":"el","GD":"en","GT":"es","GN":"fr","GW":"pt","GY":"en","HT":"fr","HN":"es","HU":"hu","IS":"en","IN":"hi","ID":"id","IR":"fa","IQ":"ar","IE":"en","IL":"he","IT":"it","CI":"fr","JM":"en","JP":"ja","JO":"ar","KZ":"ru","KE":"sw","KI":"en","KW":"ar","KG":"ru","LA":"en","LV":"lv","LB":"fr","LS":"en","LR":"en","LY":"ar","LI":"de","LT":"lt","LU":"fr","MG":"fr","MW":"en","MY":"en","MV":"en","ML":"fr","MT":"en","MH":"en","MR":"ar","MU":"en","MX":"es","FM":"en","MD":"ro","MC":"fr","MN":"mn","ME":"hr","MA":"ar","MZ":"pt","MM":"my","NA":"en","NR":"en","NP":"hi","NL":"nl","NZ":"en","NI":"es","NE":"fr","NG":"en","KP":"ko","MK":"hr","NO":"no","OM":"ar","PK":"en","PW":"en","PA":"es","PG":"en","PY":"es","PE":"es","PH":"en","PL":"pl","PT":"pt","QA":"ar","RO":"ro","RU":"ru","RW":"en","KN":"en","LC":"en","VC":"en","WS":"en","SM":"it","SA":"ar","SN":"fr","RS":"hr","SC":"en","SL":"en","SG":"en","SK":"cs","SI":"hr","SB":"en","SO":"ar","ZA":"en","KR":"ko","SS":"en","ES":"es","LK":"si","SD":"en","SR":"nl","SE":"sv","CH":"de","SY":"ar","ST":"pt","TJ":"ru","TZ":"en","TH":"th","TL":"pt","TG":"fr","TO":"en","TT":"en","TN":"ar","TM":"ru","TV":"en","TR":"tr","UG":"en","UA":"uk","AE":"ar","GB":"en","US":"en","UY":"es","UZ":"ru","VU":"en","VA":"it","VE":"es","VN":"vi","YE":"ar","ZM":"en","ZW":"en","TW":"zh"};
+
   const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
   const ROUTE_LABELS = { random: 'Random', ordered: 'Ordered' };
   const GAME_SHARE_URL = 'https://david35008.github.io/geo-quiz/';
@@ -1919,9 +2002,29 @@
         if (byTier[t][i]) result.push(byTier[t][i]);
       }
     }
+    var israelIndex = -1;
+    for (var j = 0; j < result.length; j++) {
+      if (result[j].code === 'IL') {
+        israelIndex = j;
+        break;
+      }
+    }
+    if (israelIndex > 0) {
+      result.unshift(result.splice(israelIndex, 1)[0]);
+    }
     return result;
   }
 
+  function hydrateCountryWords() {
+    COUNTRIES.forEach(function (country) {
+      var lang = COUNTRY_LANG[country.code] || 'en';
+      var base = LANG_PACKS.en || {};
+      var localized = LANG_PACKS[lang] || base;
+      country.words = Object.assign({}, base, localized, country.words);
+    });
+  }
+
+  hydrateCountryWords();
   var ORDERED_COUNTRIES = buildOrderedCountryList();
 
   function buildOrderedPlans() {
@@ -2380,12 +2483,24 @@
     showScreen('wordsStyle');
   }
 
-  function showWordPicker() {
-    pendingMode = 'words';
-    pendingWordsStyle = 'fixed';
-    pendingFixedWordKey = null;
+  function getAnswerText(country, mode, wordKey) {
+    if (mode === 'flags') return country.name;
+    if (mode === 'capitals') return country.capital;
+    if (country.words && country.words[wordKey]) return country.words[wordKey];
+    var lang = COUNTRY_LANG[country.code] || 'en';
+    var pack = LANG_PACKS[lang] || LANG_PACKS.en;
+    return (pack && pack[wordKey]) || LANG_PACKS.en[wordKey] || WORD_LABELS[wordKey];
+  }
+
+  function renderWordPickerCards(filterText) {
     var grid = document.getElementById('word-pick-grid');
+    var countEl = document.getElementById('word-pick-count');
+    var query = (filterText || '').trim().toLowerCase();
+    var visible = 0;
     grid.innerHTML = WORD_KEYS.map(function (key) {
+      var label = WORD_LABELS[key];
+      if (query && label.toLowerCase().indexOf(query) === -1) return '';
+      visible++;
       var bundle = player.modes.words.fixed[key];
       var streak = maxWordsStreak(bundle);
       var best = Math.max(bundle.random.bestStreak, bundle.ordered.bestStreak);
@@ -2393,13 +2508,25 @@
       return (
         '<div class="route-card word-pick-card' + (hasSession ? ' has-progress' : '') +
         '" data-word-key="' + key + '">' +
-        '<h3>' + escapeHtml(WORD_LABELS[key]) + '</h3>' +
-        '<p>Practice "' + escapeHtml(WORD_LABELS[key].toLowerCase()) + '" across countries</p>' +
+        '<h3>' + escapeHtml(label) + '</h3>' +
+        '<p>Practice "' + escapeHtml(label.toLowerCase()) + '" across countries</p>' +
         '<div class="route-stats">🔥 ' + streak + ' streak · Best: ' + best + '</div>' +
         (hasSession ? '<div class="route-resume-hint">Tap to pick up where you left off</div>' : '') +
         '</div>'
       );
     }).join('');
+    if (countEl) {
+      countEl.textContent = visible + ' of ' + WORD_KEYS.length + ' words';
+    }
+  }
+
+  function showWordPicker() {
+    pendingMode = 'words';
+    pendingWordsStyle = 'fixed';
+    pendingFixedWordKey = null;
+    var searchEl = document.getElementById('word-pick-search');
+    if (searchEl) searchEl.value = '';
+    renderWordPickerCards('');
     showScreen('wordPick');
   }
 
@@ -2990,7 +3117,7 @@
     gameFlag.classList.remove('show-success', 'show-wrong');
     gameFlag.textContent = flagEmoji(q.country.code);
 
-    if (currentMode === 'capitals') {
+    if (currentMode === 'capitals' || currentMode === 'words') {
       gameCountryName.textContent = q.country.name;
       gameCountryName.classList.remove('hidden');
     } else {
@@ -3001,7 +3128,7 @@
     var promptText;
     if (currentMode === 'flags') promptText = 'Which country is this?';
     else if (currentMode === 'capitals') promptText = 'What is the capital?';
-    else promptText = 'How do you say "' + WORD_LABELS[q.wordKey] + '" in ' + q.country.name + '?';
+    else promptText = 'How do you say "' + WORD_LABELS[q.wordKey] + '"?';
     document.getElementById('game-prompt').textContent = promptText;
 
     DIRECTIONS.forEach(function (dir) {
@@ -3877,6 +4004,10 @@
   document.getElementById('word-pick-back').addEventListener('click', function () {
     pendingFixedWordKey = null;
     showWordsStylePicker();
+  });
+
+  document.getElementById('word-pick-search').addEventListener('input', function (e) {
+    renderWordPickerCards(e.target.value);
   });
 
   document.getElementById('word-pick-grid').addEventListener('click', function (e) {
