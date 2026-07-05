@@ -185,6 +185,7 @@
     #screen-game {
       touch-action: none;
       user-select: none;
+      position: relative;
     }
 
     .game-header {
@@ -216,10 +217,73 @@
       animation: streakPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    .streak-display.streak-pop #game-streak {
+      display: inline-block;
+      animation: streakCountGrow 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
     @keyframes streakPop {
       0% { transform: scale(1); }
-      40% { transform: scale(1.35); color: #ffab40; }
+      40% { transform: scale(1.08); }
       100% { transform: scale(1); }
+    }
+
+    @keyframes streakCountGrow {
+      0% { transform: scale(1); color: #ff7043; }
+      45% { transform: scale(1.55); color: #66bb6a; }
+      100% { transform: scale(1); color: #ff7043; }
+    }
+
+    .success-check {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      z-index: 50;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--correct);
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 42px;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(-50%) scale(0);
+    }
+
+    .success-check.visible {
+      animation: successCheckPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes successCheckPop {
+      0% { transform: translateX(-50%) scale(0); opacity: 0; }
+      55% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+
+    .wrong-x {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      z-index: 50;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--wrong);
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 42px;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(-50%) scale(0);
+    }
+
+    .wrong-x.visible {
+      animation: successCheckPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
@@ -241,6 +305,67 @@
     }
 
     .mode-resume-hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Route picker */
+    #screen-route {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .route-picker {
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .route-picker-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .route-picker-header h2 {
+      font-size: 1.5rem;
+      margin-top: 8px;
+    }
+
+    .route-picker-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .route-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .route-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 22px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .route-card:hover { background: var(--surface-hover); transform: translateY(-2px); }
+    .route-card:active { transform: scale(0.98); }
+    .route-card.has-progress { border-color: var(--primary); }
+
+    .route-card h3 { font-size: 1.15rem; margin-bottom: 6px; }
+    .route-card p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.4; }
+    .route-card .route-stats {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    .route-resume-hint {
       margin-top: 6px;
       font-size: 0.75rem;
       color: var(--primary);
@@ -362,7 +487,17 @@
       cursor: pointer;
     }
 
-    #screen-feedback.correct { background: var(--correct); }
+    #screen-feedback.correct {
+      background: var(--correct);
+      animation: feedbackGreenFlash 0.35s ease-out;
+    }
+
+    @keyframes feedbackGreenFlash {
+      0% { background: #66bb6a; }
+      50% { background: #43a047; }
+      100% { background: var(--correct); }
+    }
+
     #screen-feedback.wrong { background: var(--wrong); }
 
     #screen-feedback h2 {
@@ -458,8 +593,8 @@
     }
 
     @keyframes celebrationFlash {
-      0% { background: radial-gradient(circle at 50% 40%, #fff9c4 0%, #66bb6a 40%, #1b5e20 100%); }
-      35% { background: radial-gradient(circle at 50% 40%, #a5d6a7 0%, #43a047 45%, #1b5e20 100%); }
+      0% { background: radial-gradient(circle at 50% 40%, #81c784 0%, #43a047 40%, #1b5e20 100%); }
+      35% { background: radial-gradient(circle at 50% 40%, #66bb6a 0%, #388e3c 45%, #1b5e20 100%); }
       100% { background: radial-gradient(circle at 50% 40%, #43a047 0%, #1b5e20 55%, #0d3311 100%); }
     }
 
@@ -756,8 +891,35 @@
     </div>
   </section>
 
+  <!-- Route picker -->
+  <section id="screen-route" class="screen">
+    <div class="route-picker">
+      <button class="btn-home" id="route-back" type="button">← Games</button>
+      <div class="route-picker-header">
+        <h2 id="route-mode-title">Flags</h2>
+        <p>Choose how countries are picked</p>
+      </div>
+      <div class="route-grid">
+        <div class="route-card" data-route="random">
+          <h3>🎲 Random</h3>
+          <p>Countries get harder as your streak grows</p>
+          <div class="route-stats" id="route-stats-random"></div>
+          <div class="route-resume-hint" id="route-resume-random"></div>
+        </div>
+        <div class="route-card" data-route="ordered">
+          <h3>📋 Ordered</h3>
+          <p>Every country in a fixed mix of easy and hard, start to finish</p>
+          <div class="route-stats" id="route-stats-ordered"></div>
+          <div class="route-resume-hint" id="route-resume-ordered"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Game -->
   <section id="screen-game" class="screen">
+    <div class="success-check" id="success-check" aria-hidden="true">✓</div>
+    <div class="wrong-x" id="wrong-x" aria-hidden="true">✕</div>
     <div class="game-header">
       <div class="game-header-row">
         <button class="btn-home" id="game-home-btn" type="button">← Games</button>
@@ -830,6 +992,7 @@
   const SWIPE_THRESHOLD = 40;
   const FLAG_DRAG_MAX = 72;
   const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
+  const WRONG_MARK_MS = 450;
   const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
   const CELEBRATION_AUTO_DISMISS_MS = 900;
   const MILESTONE_ICONS = ['🎉', '🔥', '⭐', '🏆', '👑', '💎', '🌍', '🚀'];
@@ -843,6 +1006,7 @@
     goodbye: 'Goodbye'
   };
   const MODE_LABELS = { flags: 'Flags', capitals: 'Capitals', words: 'Words' };
+  const ROUTE_LABELS = { random: 'Random', ordered: 'Ordered' };
   const DIRECTIONS = ['up', 'down', 'left', 'right'];
 
   const COUNTRIES = [
@@ -1062,7 +1226,30 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  function defaultModeStats() {
+  function buildOrderedCountryList() {
+    var byTier = [[], [], [], [], []];
+    COUNTRIES.forEach(function (c) {
+      byTier[c.difficulty - 1].push(c);
+    });
+    byTier.forEach(function (tier) {
+      tier.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    });
+    var result = [];
+    var maxLen = 0;
+    for (var t = 0; t < 5; t++) {
+      if (byTier[t].length > maxLen) maxLen = byTier[t].length;
+    }
+    for (var i = 0; i < maxLen; i++) {
+      for (var t = 0; t < 5; t++) {
+        if (byTier[t][i]) result.push(byTier[t][i]);
+      }
+    }
+    return result;
+  }
+
+  var ORDERED_COUNTRIES = buildOrderedCountryList();
+
+  function defaultRouteStats() {
     return {
       currentStreak: 0,
       bestStreak: 0,
@@ -1073,12 +1260,34 @@
     };
   }
 
-  function migrateModeStats(raw) {
-    if (!raw) return defaultModeStats();
-    if (raw.currentStreak === undefined) return defaultModeStats();
+  function defaultModeBundle() {
+    return { random: defaultRouteStats(), ordered: defaultRouteStats() };
+  }
+
+  function migrateRouteStats(raw) {
+    if (!raw) return defaultRouteStats();
     if (!raw.runSuccesses) raw.runSuccesses = [];
     if (raw.session === undefined) raw.session = null;
+    if (raw.session && raw.session.orderedIndex === undefined) {
+      raw.session.orderedIndex = 0;
+    }
     return raw;
+  }
+
+  function migrateModeStats(raw) {
+    if (!raw) return defaultModeBundle();
+    if (raw.random && raw.ordered) {
+      raw.random = migrateRouteStats(raw.random);
+      raw.ordered = migrateRouteStats(raw.ordered);
+      return raw;
+    }
+    if (raw.currentStreak !== undefined) {
+      return {
+        random: migrateRouteStats(raw),
+        ordered: defaultRouteStats()
+      };
+    }
+    return defaultModeBundle();
   }
 
   function escapeHtml(text) {
@@ -1093,22 +1302,24 @@
     return {
       name: '',
       createdAt: new Date().toISOString(),
-      modes: { flags: defaultModeStats(), capitals: defaultModeStats(), words: defaultModeStats() }
+      modes: { flags: defaultModeBundle(), capitals: defaultModeBundle(), words: defaultModeBundle() }
     };
   }
 
   function migrateLegacySession(data) {
     if (!data.activeSession || !data.activeSession.mode) return;
     var legacyMode = data.activeSession.mode;
-    if (data.modes[legacyMode]) {
-      data.modes[legacyMode].session = {
-        screen: data.activeSession.screen || 'game',
-        usedCodes: data.activeSession.usedCodes || [],
-        question: data.activeSession.question || null,
-        pendingNext: !!data.activeSession.pendingNext,
-        streakEnd: data.activeSession.streakEnd || null
-      };
-    }
+    if (!data.modes[legacyMode]) return;
+    data.modes[legacyMode] = migrateModeStats(data.modes[legacyMode]);
+    data.modes[legacyMode].random.session = {
+      route: 'random',
+      screen: data.activeSession.screen || 'game',
+      usedCodes: data.activeSession.usedCodes || [],
+      orderedIndex: 0,
+      question: data.activeSession.question || null,
+      pendingNext: !!data.activeSession.pendingNext,
+      streakEnd: data.activeSession.streakEnd || null
+    };
     delete data.activeSession;
   }
 
@@ -1133,7 +1344,7 @@
       var data = JSON.parse(raw);
       if (!data.modes) data.modes = defaultPlayer().modes;
       ['flags', 'capitals', 'words'].forEach(function (m) {
-        if (!data.modes[m]) data.modes[m] = defaultModeStats();
+        if (!data.modes[m]) data.modes[m] = defaultModeBundle();
         else data.modes[m] = migrateModeStats(data.modes[m]);
       });
       migrateLegacySession(data);
@@ -1175,10 +1386,12 @@
 
   function saveSession(opts) {
     opts = opts || {};
-    if (!currentMode || !gameState) return;
-    player.modes[currentMode].session = {
+    if (!currentMode || !currentRoute || !gameState) return;
+    player.modes[currentMode][currentRoute].session = {
+      route: currentRoute,
       screen: opts.screen || 'game',
       usedCodes: gameState.usedCodes.slice(),
+      orderedIndex: gameState.orderedIndex || 0,
       question: gameState.currentQuestion ? serializeQuestion(gameState.currentQuestion) : null,
       pendingNext: !!opts.pendingNext,
       streakEnd: opts.streakEnd || null
@@ -1186,40 +1399,47 @@
     savePlayer();
   }
 
-  function clearModeSession(mode) {
-    if (!player.modes[mode]) return;
-    player.modes[mode].session = null;
+  function clearModeSession(mode, route) {
+    if (!player.modes[mode] || !player.modes[mode][route]) return;
+    player.modes[mode][route].session = null;
     savePlayer();
   }
 
-  function prepareGameScreen(mode) {
+  function getRouteStats() {
+    return player.modes[currentMode][currentRoute];
+  }
+
+  function prepareGameScreen(mode, route) {
     showScreen('game');
-    document.getElementById('game-mode-label').textContent = MODE_LABELS[mode];
-    var modeStats = player.modes[mode];
+    document.getElementById('game-mode-label').textContent =
+      MODE_LABELS[mode] + ' · ' + ROUTE_LABELS[route];
+    var modeStats = player.modes[mode][route];
     swipeHint.classList.toggle('hidden', modeStats.currentStreak > 0);
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
   }
 
-  function resumeMode(mode) {
-    var session = player.modes[mode].session;
+  function resumeMode(mode, route) {
+    var session = player.modes[mode][route].session;
     if (!session) return false;
 
     currentMode = mode;
+    currentRoute = route;
     gameState = {
       usedCodes: session.usedCodes ? session.usedCodes.slice() : [],
+      orderedIndex: session.orderedIndex || 0,
       currentQuestion: null,
       questionStartTime: Date.now()
     };
 
     if (session.screen === 'streakEnd' && session.streakEnd) {
-      prepareGameScreen(mode);
+      prepareGameScreen(mode, route);
       var se = session.streakEnd;
       updateStreakUI(0, se.bestStreak, false);
       showStreakEndSummary(se.lostStreak, se.bestStreak, se.successes, se.chosen, se.correct, true);
       return true;
     }
 
-    prepareGameScreen(mode);
+    prepareGameScreen(mode, route);
 
     if (session.pendingNext) {
       nextQuestion();
@@ -1228,8 +1448,9 @@
 
     var q = deserializeQuestion(session.question);
     if (!q) {
-      clearModeSession(mode);
+      clearModeSession(mode, route);
       currentMode = null;
+      currentRoute = null;
       gameState = null;
       return false;
     }
@@ -1239,20 +1460,53 @@
     return true;
   }
 
-  function enterMode(mode) {
-    if (resumeMode(mode)) return;
+  function enterMode(mode, route) {
+    if (resumeMode(mode, route)) return;
     currentMode = mode;
+    currentRoute = route;
     gameState = {
       usedCodes: [],
+      orderedIndex: 0,
       currentQuestion: null,
       questionStartTime: 0
     };
-    prepareGameScreen(mode);
+    prepareGameScreen(mode, route);
     nextQuestion();
+  }
+
+  function showRoutePicker(mode) {
+    pendingMode = mode;
+    document.getElementById('route-mode-title').textContent = MODE_LABELS[mode];
+    updateRoutePickerStats(mode);
+    showScreen('route');
+  }
+
+  function updateRoutePickerStats(mode) {
+    var bundle = player.modes[mode];
+    ['random', 'ordered'].forEach(function (route) {
+      var stats = bundle[route];
+      document.getElementById('route-stats-' + route).textContent =
+        '🔥 ' + stats.currentStreak + ' streak · Best: ' + stats.bestStreak;
+      var card = document.querySelector('.route-card[data-route="' + route + '"]');
+      var resumeEl = document.getElementById('route-resume-' + route);
+      if (card) card.classList.toggle('has-progress', !!stats.session);
+      if (resumeEl) {
+        resumeEl.textContent = stats.session ? 'Tap to continue where you left off' : '';
+      }
+    });
   }
 
   function goHome() {
     clearFeedbackTimers();
+    clearCorrectSuccessTimer();
+    correctSuccessActive = false;
+    successCheck.classList.remove('visible');
+    successCheck.setAttribute('aria-hidden', 'true');
+    clearWrongMarkTimer();
+    wrongMarkActive = false;
+    wrongMarkCallback = null;
+    wrongX.classList.remove('visible');
+    wrongX.setAttribute('aria-hidden', 'true');
     feedbackActive = false;
     if (celebrationActive) {
       celebrationActive = false;
@@ -1263,7 +1517,9 @@
     }
     savePlayer();
     currentMode = null;
+    currentRoute = null;
     gameState = null;
+    pendingMode = null;
     updateHomeStats();
     showScreen('home');
   }
@@ -1272,6 +1528,7 @@
   var screens = {
     name: document.getElementById('screen-name'),
     home: document.getElementById('screen-home'),
+    route: document.getElementById('screen-route'),
     game: document.getElementById('screen-game'),
     feedback: document.getElementById('screen-feedback'),
     celebration: document.getElementById('screen-celebration'),
@@ -1304,6 +1561,8 @@
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
+  var successCheck = document.getElementById('success-check');
+  var wrongX = document.getElementById('wrong-x');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
 
@@ -1351,10 +1610,17 @@
   // --- State ---
   var player = defaultPlayer();
   var currentMode = null;
+  var currentRoute = null;
+  var pendingMode = null;
   var gameState = null;
   var inputLocked = false;
   var feedbackActive = false;
   var feedbackAutoDismissTimer = null;
+  var correctSuccessActive = false;
+  var correctSuccessTimer = null;
+  var wrongMarkActive = false;
+  var wrongMarkTimer = null;
+  var wrongMarkCallback = null;
   var celebrationActive = false;
   var celebrationTimer = null;
 
@@ -1367,16 +1633,19 @@
   function updateHomeStats() {
     homePlayerName.textContent = player.name;
     ['flags', 'capitals', 'words'].forEach(function (mode) {
-      var s = player.modes[mode];
+      var bundle = player.modes[mode];
       var card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
       var statsEl = document.getElementById('stats-' + mode);
       var resumeEl = card ? card.querySelector('.mode-resume-hint') : null;
-      statsEl.textContent = '🔥 ' + s.currentStreak + ' streak · Best: ' + s.bestStreak;
+      var hasSession = !!(bundle.random.session || bundle.ordered.session);
+      statsEl.textContent =
+        'Random 🔥 ' + bundle.random.currentStreak +
+        ' · Ordered 🔥 ' + bundle.ordered.currentStreak;
       if (card) {
-        card.classList.toggle('has-progress', !!s.session);
+        card.classList.toggle('has-progress', hasSession);
       }
       if (resumeEl) {
-        resumeEl.textContent = s.session ? 'Tap to continue where you left off' : '';
+        resumeEl.textContent = hasSession ? 'Tap to pick up where you left off' : '';
       }
     });
   }
@@ -1438,13 +1707,17 @@
     return candidates.slice(0, count);
   }
 
-  function buildQuestion(mode, streak, usedCodes) {
+  function buildQuestion(mode, route, streak, state) {
     var country;
-    var attempts = 0;
-    do {
-      country = pickCountryForStreak(streak);
-      attempts++;
-    } while (usedCodes.indexOf(country.code) !== -1 && attempts < 50);
+    if (route === 'ordered') {
+      country = ORDERED_COUNTRIES[state.orderedIndex % ORDERED_COUNTRIES.length];
+    } else {
+      var attempts = 0;
+      do {
+        country = pickCountryForStreak(streak);
+        attempts++;
+      } while (state.usedCodes.indexOf(country.code) !== -1 && attempts < 50);
+    }
 
     var wordKey = pickRandom(WORD_KEYS);
     var correct = getAnswerText(country, mode, wordKey);
@@ -1467,7 +1740,7 @@
 
   function displayQuestion(q) {
     inputLocked = false;
-    var modeStats = player.modes[currentMode];
+    var modeStats = getRouteStats();
     updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, false);
     document.getElementById('game-flag').textContent = flagEmoji(q.country.code);
 
@@ -1485,15 +1758,20 @@
   }
 
   function nextQuestion() {
-    var modeStats = player.modes[currentMode];
+    var modeStats = getRouteStats();
     gameState.currentQuestion = buildQuestion(
       currentMode,
+      currentRoute,
       modeStats.currentStreak,
-      gameState.usedCodes
+      gameState
     );
-    gameState.usedCodes.push(gameState.currentQuestion.country.code);
-    if (gameState.usedCodes.length > 30) {
-      gameState.usedCodes = gameState.usedCodes.slice(-20);
+    if (currentRoute === 'ordered') {
+      gameState.orderedIndex++;
+    } else {
+      gameState.usedCodes.push(gameState.currentQuestion.country.code);
+      if (gameState.usedCodes.length > 30) {
+        gameState.usedCodes = gameState.usedCodes.slice(-20);
+      }
     }
     gameState.questionStartTime = Date.now();
     displayQuestion(gameState.currentQuestion);
@@ -1507,7 +1785,7 @@
     var q = gameState.currentQuestion;
     var chosen = q.mapping[dir];
     var isCorrect = dir === q.correctDir;
-    var modeStats = player.modes[currentMode];
+    var modeStats = getRouteStats();
 
     modeStats.questionsAnswered++;
     if (isCorrect) {
@@ -1523,22 +1801,88 @@
       if (modeStats.currentStreak % STREAK_MILESTONE === 0) {
         showCelebration(modeStats.currentStreak);
       } else {
-        showFeedback(true, q.correct, modeStats.currentStreak);
+        showCorrectSuccess();
       }
     } else {
       var lostStreak = modeStats.currentStreak;
       var successes = modeStats.runSuccesses.slice();
+      var bestStreak = modeStats.bestStreak;
       modeStats.currentStreak = 0;
       modeStats.runSuccesses = [];
       savePlayer();
-      updateStreakUI(0, modeStats.bestStreak, false);
+      updateStreakUI(0, bestStreak, false);
       if (lostStreak === 0 && successes.length === 0) {
-        inputLocked = false;
-        nextQuestion();
+        showWrongMark(function () {
+          inputLocked = false;
+          nextQuestion();
+        });
         return;
       }
-      showStreakEndSummary(lostStreak, modeStats.bestStreak, successes, chosen, q.correct);
+      showWrongMark(function () {
+        showStreakEndSummary(lostStreak, bestStreak, successes, chosen, q.correct);
+      });
     }
+  }
+
+  function clearWrongMarkTimer() {
+    if (wrongMarkTimer) {
+      clearTimeout(wrongMarkTimer);
+      wrongMarkTimer = null;
+    }
+  }
+
+  function showWrongMark(onDone) {
+    clearWrongMarkTimer();
+    clearCorrectSuccessTimer();
+    wrongMarkActive = true;
+    wrongMarkCallback = onDone;
+    wrongX.classList.remove('visible');
+    void wrongX.offsetWidth;
+    wrongX.classList.add('visible');
+    wrongX.setAttribute('aria-hidden', 'false');
+    wrongMarkTimer = setTimeout(function () {
+      dismissWrongMark();
+    }, WRONG_MARK_MS);
+  }
+
+  function dismissWrongMark() {
+    if (!wrongMarkActive) return;
+    wrongMarkActive = false;
+    clearWrongMarkTimer();
+    wrongX.classList.remove('visible');
+    wrongX.setAttribute('aria-hidden', 'true');
+    var callback = wrongMarkCallback;
+    wrongMarkCallback = null;
+    if (callback) callback();
+  }
+
+  function clearCorrectSuccessTimer() {
+    if (correctSuccessTimer) {
+      clearTimeout(correctSuccessTimer);
+      correctSuccessTimer = null;
+    }
+  }
+
+  function showCorrectSuccess() {
+    clearCorrectSuccessTimer();
+    correctSuccessActive = true;
+    successCheck.classList.remove('visible');
+    void successCheck.offsetWidth;
+    successCheck.classList.add('visible');
+    successCheck.setAttribute('aria-hidden', 'false');
+
+    correctSuccessTimer = setTimeout(function () {
+      dismissCorrectSuccess();
+    }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
+  }
+
+  function dismissCorrectSuccess() {
+    if (!correctSuccessActive) return;
+    correctSuccessActive = false;
+    clearCorrectSuccessTimer();
+    successCheck.classList.remove('visible');
+    successCheck.setAttribute('aria-hidden', 'true');
+    nextQuestion();
   }
 
   function clearFeedbackTimers() {
@@ -1546,23 +1890,6 @@
       clearTimeout(feedbackAutoDismissTimer);
       feedbackAutoDismissTimer = null;
     }
-  }
-
-  function showFeedback(isCorrect, correct, streakInfo) {
-    feedbackScreen.className = 'screen active correct';
-    feedbackTitle.textContent = 'Correct!';
-    feedbackDetail.innerHTML =
-      '<p>' + escapeHtml(correct) + '</p><p>🔥 Streak: ' + streakInfo + '</p>';
-
-    feedbackContinue.textContent = '';
-    feedbackTimer.textContent = '';
-
-    clearFeedbackTimers();
-    feedbackActive = true;
-
-    feedbackAutoDismissTimer = setTimeout(function () {
-      dismissFeedback();
-    }, FEEDBACK_AUTO_DISMISS_CORRECT_MS);
   }
 
   function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct, skipSave) {
@@ -1592,14 +1919,6 @@
     nextQuestion();
   }
 
-  function dismissFeedback() {
-    if (!feedbackActive) return;
-    feedbackActive = false;
-    clearFeedbackTimers();
-    showScreen('game');
-    nextQuestion();
-  }
-
   function spawnConfetti() {
     celebrationConfetti.innerHTML = '';
     var colors = ['#ffeb3b', '#ff7043', '#4fc3f7', '#fff', '#ba68c8', '#fff176', '#f06292'];
@@ -1618,6 +1937,9 @@
   }
 
   function replayCelebrationAnimation() {
+    celebrationScreen.style.animation = 'none';
+    void celebrationScreen.offsetWidth;
+    celebrationScreen.style.animation = '';
     celebrationContent.classList.remove('is-animating');
     celebrationRing.style.animation = 'none';
     void celebrationRing.offsetWidth;
@@ -1631,8 +1953,7 @@
     celebrationIcon.textContent = MILESTONE_ICONS[milestoneIndex % MILESTONE_ICONS.length];
     celebrationTitle.textContent = String(streak);
     celebrationMessage.textContent = MILESTONE_MESSAGES[milestoneIndex % MILESTONE_MESSAGES.length];
-    var modeStats = player.modes[currentMode];
-    celebrationBest.textContent = streak >= modeStats.bestStreak ? '🏅 New best!' : '';
+    celebrationBest.textContent = streak >= getRouteStats().bestStreak ? '🏅 New best!' : '';
     spawnConfetti();
     showScreen('celebration');
     replayCelebrationAnimation();
@@ -1780,10 +2101,10 @@
   btnGameHome.addEventListener('click', goHome);
   btnStreakEndHome.addEventListener('click', goHome);
 
-  feedbackScreen.addEventListener('click', dismissFeedback);
-  feedbackScreen.addEventListener('touchend', function (e) {
-    e.preventDefault();
-    dismissFeedback();
+  document.getElementById('screen-game').addEventListener('click', function (e) {
+    if (e.target.closest('.btn-home')) return;
+    if (correctSuccessActive) dismissCorrectSuccess();
+    else if (wrongMarkActive) dismissWrongMark();
   });
 
   celebrationScreen.addEventListener('click', dismissCelebration);
@@ -1822,7 +2143,19 @@
   // --- Home mode cards ---
   document.querySelectorAll('.mode-card').forEach(function (card) {
     card.addEventListener('click', function () {
-      enterMode(card.getAttribute('data-mode'));
+      showRoutePicker(card.getAttribute('data-mode'));
+    });
+  });
+
+  document.getElementById('route-back').addEventListener('click', function () {
+    pendingMode = null;
+    showScreen('home');
+  });
+
+  document.querySelectorAll('.route-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      if (!pendingMode) return;
+      enterMode(pendingMode, card.getAttribute('data-route'));
     });
   });
 
