@@ -1143,12 +1143,46 @@
       font-size: 1.15rem;
       font-weight: 600;
       margin-top: 16px;
+      margin-bottom: 0;
+    }
+
+    .streak-end-answers {
+      margin-top: 12px;
+      padding: 0 8px;
+    }
+
+    .streak-end-missed {
+      margin-bottom: 10px;
+    }
+
+    .streak-end-answer-label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+    }
+
+    .streak-end-missed-value {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--wrong);
+      line-height: 1.3;
+    }
+
+    .streak-end-correct-value {
+      display: block;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--correct);
+      line-height: 1.25;
     }
 
     .streak-end-list-wrap {
       flex: 1;
       min-height: 0;
-      margin: 16px 0;
+      margin: 12px 0 0;
       background: var(--surface);
       border-radius: var(--radius);
       overflow: hidden;
@@ -1212,19 +1246,6 @@
       word-break: normal;
       overflow-wrap: normal;
     }
-
-    .streak-end-miss {
-      flex-shrink: 0;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      padding: 8px 12px;
-      background: var(--surface);
-      border-radius: var(--radius);
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .streak-end-miss strong { color: var(--wrong); }
 
     .streak-end-actions {
       flex-shrink: 0;
@@ -1357,12 +1378,21 @@
         <div class="streak-end-count" id="streak-end-count">0</div>
         <p class="streak-end-sublabel">correct in a row</p>
         <p class="streak-end-best">🏅 Best: <span id="streak-end-best">0</span></p>
+        <div class="streak-end-answers" id="streak-end-answers">
+          <p class="streak-end-missed">
+            <span class="streak-end-answer-label">You picked</span>
+            <span class="streak-end-missed-value" id="streak-end-chosen"></span>
+          </p>
+          <p class="streak-end-correct">
+            <span class="streak-end-answer-label">Correct</span>
+            <span class="streak-end-correct-value" id="streak-end-correct"></span>
+          </p>
+        </div>
       </div>
       <div class="streak-end-list-wrap">
         <div class="streak-end-list-title">Your streak</div>
         <div class="streak-end-list" id="streak-end-list"></div>
       </div>
-      <p class="streak-end-miss" id="streak-end-miss"></p>
       <div class="streak-end-actions">
         <button class="btn btn-primary" id="streak-end-continue" style="width:100%">Keep playing</button>
       </div>
@@ -1946,7 +1976,8 @@
   var milestoneLabel = document.getElementById('milestone-label');
   var milestoneBest = document.getElementById('milestone-best');
   var streakEndList = document.getElementById('streak-end-list');
-  var streakEndMiss = document.getElementById('streak-end-miss');
+  var streakEndChosen = document.getElementById('streak-end-chosen');
+  var streakEndCorrect = document.getElementById('streak-end-correct');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
@@ -2315,9 +2346,8 @@
     document.getElementById('streak-end-count').textContent = lostStreak;
     document.getElementById('streak-end-best').textContent = bestStreak;
     renderSuccessList(successes);
-    streakEndMiss.innerHTML =
-      'Missed: <strong>' + escapeHtml(chosen) + '</strong> · Correct: <strong>' +
-      escapeHtml(correct) + '</strong>';
+    streakEndChosen.textContent = chosen;
+    streakEndCorrect.textContent = correct;
     if (!skipSave) {
       saveSession({
         screen: 'streakEnd',
