@@ -829,6 +829,7 @@
       gap: 4px;
       grid-row: 2;
       align-self: stretch;
+      align-items: stretch;
       width: 100%;
       min-width: 0;
       min-height: 0;
@@ -854,21 +855,26 @@
     }
 
     .side-stack .side-label {
-      flex: 1 1 auto;
+      flex: 1 1 0;
       min-height: 0;
+      width: 100%;
+      align-self: stretch;
       overflow: visible;
     }
 
     .side-label {
-      display: flex;
-      align-items: flex-start;
+      display: grid;
+      place-items: center;
+      align-content: center;
       justify-content: center;
-      align-self: stretch;
-      justify-self: stretch;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
       writing-mode: vertical-rl;
       text-orientation: mixed;
       letter-spacing: 0.03em;
-      padding: 8px 2px;
+      padding: 8px 4px;
       background: var(--surface);
       border-radius: var(--radius);
       color: var(--text-muted);
@@ -882,7 +888,7 @@
       overflow: visible;
       overflow-wrap: break-word;
       word-break: normal;
-      min-height: 0;
+      box-sizing: border-box;
       position: relative;
       z-index: 3;
     }
@@ -964,7 +970,9 @@
 
       .side-label {
         font-size: clamp(0.68rem, 2.2vw, 0.82rem);
-        padding: 6px 1px;
+        padding: 6px 3px;
+        overflow: visible;
+        overflow-wrap: break-word;
       }
 
       .dir-left,
@@ -978,11 +986,6 @@
         word-break: normal;
         hyphens: none;
         overflow: visible;
-      }
-
-      .side-label {
-        overflow: visible;
-        overflow-wrap: break-word;
       }
 
       .dir-up {
