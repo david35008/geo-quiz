@@ -2922,6 +2922,7 @@
   var celebrationTimer = null;
   var skipUrlSync = false;
   var applyingRoute = false;
+  var isFirstVisit = false;
   var lastStreakEndSummary = null;
 
   function computeHash() {
@@ -3090,8 +3091,14 @@
       pendingMode = null;
       pendingWordsStyle = null;
       pendingFixedWordKey = null;
-      updateHomeStats();
-      showScreen('home');
+      if (isFirstVisit) {
+        isFirstVisit = false;
+        enterMode('flags', 'random', false, null, null);
+        savePlayer();
+      } else {
+        updateHomeStats();
+        showScreen('home');
+      }
     }
 
     skipUrlSync = false;
@@ -4346,6 +4353,7 @@
   storageAvailable = checkStorage();
   if (!storageAvailable) storageWarning.classList.add('visible');
 
+  isFirstVisit = storageAvailable && !localStorage.getItem(STORAGE_KEY);
   player = loadPlayer();
   initAppCredit();
   window.addEventListener('hashchange', function () {
