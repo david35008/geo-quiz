@@ -1678,6 +1678,10 @@
       gap: 10px;
     }
 
+    .streak-end-actions .btn-secondary {
+      width: 100%;
+    }
+
     .btn-whatsapp {
       background: #25D366;
       color: #fff;
@@ -1875,6 +1879,7 @@
       <div class="streak-end-actions">
         <button class="btn btn-whatsapp" id="streak-end-share" type="button">Share on WhatsApp</button>
         <button class="btn btn-primary" id="streak-end-continue" type="button">Play again</button>
+        <button class="btn btn-secondary" id="streak-end-other-games" type="button">Other Games</button>
       </div>
     </div>
   </section>
@@ -2776,6 +2781,10 @@
       }
       hideMilestonePanel();
     }
+    if (screens.streakEnd.classList.contains('active') && currentMode && currentRoute) {
+      clearModeSession(currentMode, currentRoute, currentWordsStyle, currentFixedWordKey);
+    }
+    lastStreakEndSummary = null;
     savePlayer();
     currentMode = null;
     currentRoute = null;
@@ -2826,6 +2835,7 @@
   var streakEndCorrect = document.getElementById('streak-end-correct');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnStreakEndShare = document.getElementById('streak-end-share');
+  var btnStreakEndOtherGames = document.getElementById('streak-end-other-games');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
   var gameStreakEl = document.getElementById('game-streak');
@@ -4223,6 +4233,7 @@
 
   btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
   btnStreakEndShare.addEventListener('click', shareStreakOnWhatsApp);
+  btnStreakEndOtherGames.addEventListener('click', goHome);
 
   btnGameHome.addEventListener('click', goHome);
   btnStreakEndHome.addEventListener('click', goHome);
