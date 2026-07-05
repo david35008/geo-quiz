@@ -425,12 +425,19 @@
     #screen-celebration {
       align-items: center;
       justify-content: center;
-      padding: 32px;
+      padding: 24px;
       text-align: center;
       z-index: 200;
       cursor: pointer;
-      background: linear-gradient(160deg, #1a472a 0%, #2e7d32 45%, #1b5e20 100%);
+      background: radial-gradient(circle at 50% 40%, #43a047 0%, #1b5e20 55%, #0d3311 100%);
       overflow: hidden;
+      animation: celebrationFlash 0.9s ease-out;
+    }
+
+    @keyframes celebrationFlash {
+      0% { background: radial-gradient(circle at 50% 40%, #fff9c4 0%, #66bb6a 40%, #1b5e20 100%); }
+      35% { background: radial-gradient(circle at 50% 40%, #a5d6a7 0%, #43a047 45%, #1b5e20 100%); }
+      100% { background: radial-gradient(circle at 50% 40%, #43a047 0%, #1b5e20 55%, #0d3311 100%); }
     }
 
     .celebration-confetti {
@@ -442,57 +449,104 @@
 
     .confetti-piece {
       position: absolute;
-      top: -12px;
-      width: 10px;
-      height: 14px;
-      opacity: 0.9;
-      animation: confettiFall linear forwards;
+      left: 50%;
+      top: 42%;
+      width: 8px;
+      height: 10px;
+      opacity: 0;
+      animation: confettiBurst 0.75s ease-out forwards;
     }
 
-    @keyframes confettiFall {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity: 0.3; }
+    @keyframes confettiBurst {
+      0% {
+        transform: translate(-50%, -50%) scale(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(540deg);
+        opacity: 0;
+      }
+    }
+
+    .celebration-ring {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      width: 80px;
+      height: 80px;
+      margin: -40px 0 0 -40px;
+      border: 3px solid rgba(255, 255, 255, 0.85);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: celebrationRing 0.65s ease-out forwards;
+    }
+
+    @keyframes celebrationRing {
+      0% { transform: scale(0.2); opacity: 1; }
+      100% { transform: scale(4); opacity: 0; }
     }
 
     .celebration-content {
       position: relative;
       z-index: 1;
-      animation: celebrationBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes celebrationBounce {
-      0% { transform: scale(0.3); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+    .celebration-content.is-animating .celebration-icon {
+      animation: celebrationIconPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .celebration-content.is-animating #celebration-title {
+      animation: celebrationTitlePop 0.45s 0.08s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .celebration-content.is-animating .celebration-sub {
+      animation: celebrationSubPop 0.35s 0.18s ease-out both;
+    }
+
+    @keyframes celebrationIconPop {
+      0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+      70% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes celebrationTitlePop {
+      0% { transform: scale(0.5) translateY(20px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    @keyframes celebrationSubPop {
+      0% { transform: translateY(8px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
 
     .celebration-icon {
-      font-size: 5rem;
+      font-size: 4.5rem;
       line-height: 1;
-      margin-bottom: 12px;
-      animation: celebrationPulse 1s ease-in-out infinite;
-    }
-
-    @keyframes celebrationPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.12); }
+      margin-bottom: 4px;
+      display: block;
     }
 
     #screen-celebration h2 {
-      font-size: 2.8rem;
-      margin-bottom: 8px;
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 0;
       color: #fff;
+      line-height: 1;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
     }
 
     #screen-celebration .celebration-sub {
-      font-size: 1.2rem;
-      opacity: 0.95;
-      margin-bottom: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff9c4;
+      margin-top: 6px;
     }
 
     #screen-celebration .celebration-best {
       color: var(--accent);
-      font-size: 1rem;
-      margin-top: 8px;
+      font-size: 0.9rem;
+      margin-top: 6px;
+      min-height: 1.2em;
     }
 
     /* Streak ended summary */
@@ -706,12 +760,12 @@
   <!-- Milestone celebration -->
   <section id="screen-celebration" class="screen">
     <div class="celebration-confetti" id="celebration-confetti"></div>
-    <div class="celebration-content">
-      <div class="celebration-icon" id="celebration-icon">🎉</div>
+    <div class="celebration-ring" id="celebration-ring"></div>
+    <div class="celebration-content" id="celebration-content">
+      <span class="celebration-icon" id="celebration-icon">🎉</span>
       <h2 id="celebration-title"></h2>
       <p class="celebration-sub" id="celebration-message"></p>
       <p class="celebration-best" id="celebration-best"></p>
-      <p class="feedback-continue">Tap to continue</p>
     </div>
   </section>
 
@@ -745,18 +799,9 @@
   const FLAG_DRAG_MAX = 72;
   const FEEDBACK_AUTO_DISMISS_CORRECT_MS = 350;
   const FEEDBACK_AUTO_DISMISS_WRONG_MS = 1600;
-  const CELEBRATION_AUTO_DISMISS_MS = 2200;
+  const CELEBRATION_AUTO_DISMISS_MS = 900;
   const MILESTONE_ICONS = ['🎉', '🔥', '⭐', '🏆', '👑', '💎', '🌍', '🚀'];
-  const MILESTONE_MESSAGES = [
-    'Nice start! Keep going!',
-    'You\'re on a roll!',
-    'Unstoppable!',
-    'Geography master!',
-    'Legendary streak!',
-    'Absolutely incredible!',
-    'World class!',
-    'Hall of fame!'
-  ];
+  const MILESTONE_MESSAGES = ['Nice!', 'On fire!', 'Wow!', 'Amazing!', 'Legend!', 'Incredible!', 'Pro!', 'GOAT!'];
   const WORD_KEYS = ['hello', 'thankYou', 'yes', 'no', 'goodbye'];
   const WORD_LABELS = {
     hello: 'Hello',
@@ -1078,6 +1123,8 @@
   var celebrationTitle = document.getElementById('celebration-title');
   var celebrationMessage = document.getElementById('celebration-message');
   var celebrationBest = document.getElementById('celebration-best');
+  var celebrationContent = document.getElementById('celebration-content');
+  var celebrationRing = document.getElementById('celebration-ring');
   var streakEndList = document.getElementById('streak-end-list');
   var streakEndMiss = document.getElementById('streak-end-miss');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
@@ -1370,30 +1417,40 @@
 
   function spawnConfetti() {
     celebrationConfetti.innerHTML = '';
-    var colors = ['#ffeb3b', '#ff7043', '#4fc3f7', '#81c784', '#ba68c8', '#fff176', '#f06292'];
-    for (var i = 0; i < 55; i++) {
+    var colors = ['#ffeb3b', '#ff7043', '#4fc3f7', '#fff', '#ba68c8', '#fff176', '#f06292'];
+    for (var i = 0; i < 36; i++) {
       var piece = document.createElement('div');
       piece.className = 'confetti-piece';
-      piece.style.left = Math.random() * 100 + '%';
+      var angle = (Math.PI * 2 * i) / 36 + (Math.random() - 0.5) * 0.4;
+      var dist = 70 + Math.random() * 110;
+      piece.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+      piece.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
       piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
-      piece.style.animationDelay = (Math.random() * 0.6) + 's';
-      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDelay = (Math.random() * 0.08) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '1px';
       celebrationConfetti.appendChild(piece);
     }
+  }
+
+  function replayCelebrationAnimation() {
+    celebrationContent.classList.remove('is-animating');
+    celebrationRing.style.animation = 'none';
+    void celebrationRing.offsetWidth;
+    celebrationRing.style.animation = '';
+    void celebrationContent.offsetWidth;
+    celebrationContent.classList.add('is-animating');
   }
 
   function showCelebration(streak) {
     var milestoneIndex = Math.floor(streak / STREAK_MILESTONE) - 1;
     celebrationIcon.textContent = MILESTONE_ICONS[milestoneIndex % MILESTONE_ICONS.length];
-    celebrationTitle.textContent = streak + ' in a row!';
+    celebrationTitle.textContent = String(streak);
     celebrationMessage.textContent = MILESTONE_MESSAGES[milestoneIndex % MILESTONE_MESSAGES.length];
     var modeStats = player.modes[currentMode];
-    celebrationBest.textContent = streak >= modeStats.bestStreak
-      ? '🏅 New personal best!'
-      : 'Best: ' + modeStats.bestStreak;
+    celebrationBest.textContent = streak >= modeStats.bestStreak ? '🏅 New best!' : '';
     spawnConfetti();
     showScreen('celebration');
+    replayCelebrationAnimation();
     celebrationActive = true;
     if (celebrationTimer) clearTimeout(celebrationTimer);
     celebrationTimer = setTimeout(function () {
