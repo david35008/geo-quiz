@@ -620,7 +620,11 @@
     }
 
     .streak-display { color: #ff7043; font-weight: 700; }
-    .streak-display.streak-hero { font-size: 1.35rem; }
+    .streak-display.streak-hero {
+      font-size: 1.35rem;
+      cursor: pointer;
+      user-select: none;
+    }
     .streak-display.streak-pop {
       animation: streakPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -2951,10 +2955,30 @@
     });
   });
 
+  function resetBestStreakForCurrentRoute() {
+    if (!currentMode || !currentRoute) return;
+    var stats = getRouteStats();
+    stats.bestStreak = 0;
+    savePlayer();
+    updateStreakUI(stats.currentStreak, 0, false);
+    updateHomeStats();
+  }
+
   btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
 
   btnGameHome.addEventListener('click', goHome);
   btnStreakEndHome.addEventListener('click', goHome);
+
+  if (streakHeroEl) {
+    streakHeroEl.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+      if (!currentMode || !currentRoute) return;
+      if (getRouteStats().bestStreak === 0) return;
+      if (confirm('Do you want to reset your best streak score?')) {
+        resetBestStreakForCurrentRoute();
+      }
+    });
+  }
 
   document.getElementById('screen-game').addEventListener('click', function (e) {
     if (e.target.closest('.btn-home')) return;
