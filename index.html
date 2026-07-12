@@ -156,6 +156,135 @@
 
     .share-name-actions .btn { flex: 1; margin-top: 0; }
 
+    .best-streak-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .best-streak-overlay.hidden { display: none; }
+
+    .best-streak-dialog {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: clamp(20px, 4vh, 28px);
+      width: 100%;
+      max-width: 420px;
+      max-height: min(85vh, 640px);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      flex-shrink: 0;
+      margin: auto;
+    }
+
+    .best-streak-dialog h2 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .best-streak-dialog-subtitle {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      text-align: center;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .best-streak-unavailable {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      text-align: center;
+      padding: 8px 4px 16px;
+      flex-shrink: 0;
+    }
+
+    .best-streak-unavailable.hidden { display: none; }
+
+    .best-streak-list-wrap {
+      flex: 1 1 auto;
+      min-height: 120px;
+      max-height: min(52vh, 420px);
+      background: var(--bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 14px;
+    }
+
+    .best-streak-list-wrap.hidden { display: none; }
+
+    .best-streak-list-title {
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #2a3a4a;
+      flex-shrink: 0;
+    }
+
+    .best-streak-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding: 4px 0;
+    }
+
+    .best-streak-list .streak-end-item {
+      flex-shrink: 0;
+    }
+
+    .best-streak-dialog .btn {
+      width: 100%;
+      margin-top: 0;
+      flex-shrink: 0;
+    }
+
+    .best-streak-actions {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .best-streak-actions .btn {
+      flex: 1;
+    }
+
+    .best-streak-actions .btn-share {
+      background: #fff;
+      color: #0f1419;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+      gap: 8px;
+    }
+
+    .best-streak-actions .btn-share:hover:not(:disabled) {
+      background: #f5f5f5;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    .best-streak-actions .btn-icon-svg {
+      width: 1.1em;
+      height: 1.1em;
+      flex-shrink: 0;
+    }
+
     .app-credit {
       text-align: center;
       color: var(--text-muted);
@@ -789,7 +918,42 @@
       transform: none !important;
     }
 
-    .best-streak-label { color: var(--accent); font-size: 0.95rem; font-weight: 600; }
+    .best-streak-label {
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .best-streak-label:hover:not(:disabled) {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .best-streak-label:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+
+    .best-streak-chip {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .best-streak-chip:disabled {
+      cursor: default;
+      text-decoration: none;
+    }
 
     .btn-home {
       background: transparent;
@@ -1474,6 +1638,7 @@
       font-weight: 600;
       margin-top: 16px;
       margin-bottom: 0;
+      display: inline-block;
     }
 
     .streak-end-answers {
@@ -1779,7 +1944,9 @@
       </div>
       <div class="game-header-row">
         <span id="game-mode-label"></span>
-        <span class="best-streak-label">🏅 Best: <span id="game-best-streak">0</span></span>
+        <button class="best-streak-label" id="game-best-streak-btn" type="button">
+          🏅 Best: <span id="game-best-streak">0</span>
+        </button>
       </div>
       <p class="prompt" id="game-prompt"></p>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
@@ -1837,7 +2004,9 @@
         <p class="streak-end-label">Streak ended</p>
         <div class="streak-end-count" id="streak-end-count">0</div>
         <p class="streak-end-sublabel">correct in a row</p>
-        <p class="streak-end-best">🏅 Best: <span id="streak-end-best">0</span></p>
+        <button class="streak-end-best best-streak-label" id="streak-end-best-btn" type="button">
+          🏅 Best: <span id="streak-end-best">0</span>
+        </button>
         <div class="streak-end-answers" id="streak-end-answers">
           <div class="streak-end-lost-flag hidden" id="streak-end-lost-flag">
             <span class="streak-end-answer-label">Lost on</span>
@@ -1876,6 +2045,29 @@
       </div>
     </div>
   </section>
+
+  <div class="best-streak-overlay hidden" id="best-streak-overlay">
+    <div class="best-streak-dialog" role="dialog" aria-labelledby="best-streak-title">
+      <h2 id="best-streak-title">Best streak</h2>
+      <p class="best-streak-dialog-subtitle" id="best-streak-subtitle"></p>
+      <div class="best-streak-list-wrap hidden" id="best-streak-list-wrap">
+        <div class="best-streak-list-title">Streak history</div>
+        <div class="best-streak-list" id="best-streak-list"></div>
+      </div>
+      <p class="best-streak-unavailable hidden" id="best-streak-unavailable">
+        History is not available for this best score — it was set before streak history was saved.
+      </p>
+      <div class="best-streak-actions">
+        <button class="btn btn-share" id="best-streak-share" type="button" disabled>
+          <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          <span id="best-streak-share-label">Share</span>
+        </button>
+        <button class="btn btn-secondary" id="best-streak-close" type="button">Close</button>
+      </div>
+    </div>
+  </div>
 
   <div class="share-name-overlay hidden" id="share-name-overlay">
     <div class="share-name-dialog" role="dialog" aria-labelledby="share-name-title">
@@ -2231,6 +2423,7 @@
     return {
       currentStreak: 0,
       bestStreak: 0,
+      bestStreakHistory: null,
       runSuccesses: [],
       questionsAnswered: 0,
       correctCount: 0,
@@ -2257,6 +2450,8 @@
       raw.bestStreak = raw.currentStreak;
     }
     if (!raw.runSuccesses) raw.runSuccesses = [];
+    if (raw.bestStreakHistory === undefined) raw.bestStreakHistory = null;
+    else if (!Array.isArray(raw.bestStreakHistory)) raw.bestStreakHistory = null;
     if (raw.session === undefined) raw.session = null;
     if (raw.session && raw.session.orderedIndex === undefined) {
       raw.session.orderedIndex = 0;
@@ -2743,6 +2938,15 @@
     document.getElementById('route-picker-subtitle').textContent = subtitle;
   }
 
+  function formatRouteStatsHtml(stats, route) {
+    var bestDisabled = stats.bestStreak === 0 ? ' disabled' : '';
+    return (
+      '🔥 ' + stats.currentStreak + ' streak · ' +
+      '<button type="button" class="best-streak-chip" data-action="best-history" data-route="' +
+      route + '"' + bestDisabled + '>🏅 Best: ' + stats.bestStreak + '</button>'
+    );
+  }
+
   function updateRoutePickerStats(mode) {
     var bundle;
     if (mode === 'words') {
@@ -2752,8 +2956,7 @@
     }
     ['random', 'ordered'].forEach(function (route) {
       var stats = bundle[route];
-      document.getElementById('route-stats-' + route).textContent =
-        '🔥 ' + stats.currentStreak + ' streak · Best: ' + stats.bestStreak;
+      document.getElementById('route-stats-' + route).innerHTML = formatRouteStatsHtml(stats, route);
       var card = document.querySelector('.route-card[data-route="' + route + '"]');
       var resumeEl = document.getElementById('route-resume-' + route);
       if (card) card.classList.toggle('has-progress', route === 'random' && !!stats.session);
@@ -2817,6 +3020,16 @@
   var shareNameSubmit = document.getElementById('share-name-submit');
   var shareNameCancel = document.getElementById('share-name-cancel');
   var shareNameCallback = null;
+  var bestStreakOverlay = document.getElementById('best-streak-overlay');
+  var bestStreakTitle = document.getElementById('best-streak-title');
+  var bestStreakSubtitle = document.getElementById('best-streak-subtitle');
+  var bestStreakListWrap = document.getElementById('best-streak-list-wrap');
+  var bestStreakList = document.getElementById('best-streak-list');
+  var bestStreakUnavailable = document.getElementById('best-streak-unavailable');
+  var btnBestStreakClose = document.getElementById('best-streak-close');
+  var btnBestStreakShare = document.getElementById('best-streak-share');
+  var bestStreakShareLabel = document.getElementById('best-streak-share-label');
+  var gameBestStreakBtn = document.getElementById('game-best-streak-btn');
   var gameArea = document.getElementById('game-area');
   var gameFlag = document.getElementById('game-flag');
   var gameCountryName = document.getElementById('game-country-name');
@@ -2844,6 +3057,7 @@
   var btnStreakEndOtherGames = document.getElementById('streak-end-other-games');
   var btnGameHome = document.getElementById('game-home-btn');
   var btnStreakEndHome = document.getElementById('streak-end-home');
+  var btnStreakEndBest = document.getElementById('streak-end-best-btn');
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
   var streakHistory = document.getElementById('streak-history');
@@ -2960,6 +3174,7 @@
   var applyingRoute = false;
   var isFirstVisit = false;
   var lastStreakEndSummary = null;
+  var activeBestStreakView = null;
 
   function computeHash() {
     if (screens.home.classList.contains('active')) return '#/home';
@@ -3183,6 +3398,7 @@
   function updateStreakUI(streak, bestStreak, animate) {
     gameStreakEl.textContent = streak;
     document.getElementById('game-best-streak').textContent = bestStreak;
+    if (gameBestStreakBtn) gameBestStreakBtn.disabled = bestStreak === 0;
     var progress = streak === 0 ? 0 : ((streak % STREAK_MILESTONE) / STREAK_MILESTONE) * 100;
     if (streak > 0 && streak % STREAK_MILESTONE === 0) progress = 100;
     document.getElementById('progress-fill').style.width = progress + '%';
@@ -3371,9 +3587,14 @@
     modeStats.questionsAnswered++;
     if (isCorrect) {
       modeStats.correctCount++;
+      var previousBest = modeStats.bestStreak || 0;
       modeStats.runSuccesses.push(makeSuccessEntry(q));
       modeStats.currentStreak++;
-      modeStats.bestStreak = Math.max(modeStats.bestStreak || 0, modeStats.currentStreak);
+      modeStats.bestStreak = Math.max(previousBest, modeStats.currentStreak);
+      if (modeStats.currentStreak > previousBest) {
+        modeStats.bestStreakHistory = modeStats.runSuccesses.slice();
+      }
+      savePlayer();
       saveSession({ screen: 'game', pendingNext: true });
       updateStreakUI(modeStats.currentStreak, modeStats.bestStreak, true);
       updateHomeStats();
@@ -3623,6 +3844,211 @@
     return startY + boxHeight;
   }
 
+  function formatShareHistoryAnswer(entry, mode) {
+    if (mode === 'flags') return '';
+    if (mode === 'capitals') return entry.answer || '';
+    if (!entry.answer) return '';
+    return entry.answer + (entry.wordKey ? ' · ' + WORD_LABELS[entry.wordKey] : '');
+  }
+
+  function measureBestStreakHistoryBoxHeight(ctx, successes, mode, contentWidth) {
+    if (!successes || !successes.length) return 0;
+    var h = 48;
+    var rowWidth = contentWidth - 32;
+    ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    successes.forEach(function (entry) {
+      var title = flagEmoji(entry.code) + ' ' + (entry.name || '');
+      h += wrapCanvasLines(ctx, title, rowWidth).length * 20 + 4;
+      var answer = formatShareHistoryAnswer(entry, mode);
+      if (answer) {
+        ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        h += wrapCanvasLines(ctx, answer, rowWidth).length * 17 + 4;
+        ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      }
+      h += 8;
+    });
+    return h + 12;
+  }
+
+  function drawBestStreakHistoryBox(ctx, successes, mode, width, startY, contentWidth) {
+    var boxHeight = measureBestStreakHistoryBoxHeight(ctx, successes, mode, contentWidth);
+    if (!boxHeight) return startY;
+
+    drawCanvasRoundRect(ctx, 32, startY, contentWidth, boxHeight, 12);
+    ctx.fillStyle = '#15202b';
+    ctx.fill();
+
+    var y = startY + 20;
+    var rowWidth = contentWidth - 32;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Your streak', 48, y);
+    y += 28;
+
+    successes.forEach(function (entry, index) {
+      ctx.fillStyle = SHARE_THEME.textMuted;
+      ctx.font = '500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(String(index + 1) + '.', 48, y + 2);
+
+      ctx.fillStyle = SHARE_THEME.text;
+      ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      var title = flagEmoji(entry.code) + ' ' + (entry.name || '');
+      wrapCanvasLines(ctx, title, rowWidth - 20).forEach(function (line) {
+        ctx.fillText(line, 68, y);
+        y += 20;
+      });
+
+      var answer = formatShareHistoryAnswer(entry, mode);
+      if (answer) {
+        ctx.fillStyle = SHARE_THEME.textMuted;
+        ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        wrapCanvasLines(ctx, answer, rowWidth - 20).forEach(function (line) {
+          ctx.fillText(line, 68, y);
+          y += 17;
+        });
+      }
+      y += 8;
+    });
+
+    return startY + boxHeight;
+  }
+
+  function measureBestShareCardHeight(ctx, summary, contentWidth) {
+    var y = 56;
+    if (player.name) y += 28;
+    y += 18 + buildGameCriteriaLines(
+      summary.mode,
+      summary.route,
+      summary.wordsStyle,
+      summary.wordKey
+    ).length * 22;
+    y += 28;
+    y += 24 + 78 + 26;
+    y += measureBestStreakHistoryBoxHeight(ctx, summary.successes, summary.mode, contentWidth);
+    y += 56;
+    return y + 28;
+  }
+
+  function drawBestStreakShareCard(ctx, summary, width, height) {
+    var pad = 32;
+    var contentWidth = width - pad * 2;
+    var y = pad;
+
+    var gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, SHARE_THEME.bgStart);
+    gradient.addColorStop(1, SHARE_THEME.bgEnd);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    drawCanvasRoundRect(ctx, pad - 8, pad - 8, width - (pad - 8) * 2, height - pad - 20, 16);
+    ctx.fillStyle = SHARE_THEME.card;
+    ctx.fill();
+    ctx.strokeStyle = SHARE_THEME.cardBorder;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = SHARE_THEME.primary;
+    ctx.font = '700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Geo Quiz', width / 2, y);
+    y += 56;
+
+    if (player.name) {
+      ctx.fillStyle = SHARE_THEME.text;
+      ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(player.name, width / 2, y);
+      y += 28;
+    }
+
+    var criteria = buildGameCriteriaLines(
+      summary.mode,
+      summary.route,
+      summary.wordsStyle,
+      summary.wordKey
+    );
+    drawCanvasRoundRect(ctx, pad, y, contentWidth, criteria.length * 22 + 20, 10);
+    ctx.fillStyle = '#15202b';
+    ctx.fill();
+    var criteriaY = y + 18;
+    ctx.textAlign = 'left';
+    ctx.font = '500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    criteria.forEach(function (line) {
+      ctx.fillText('• ' + line, pad + 14, criteriaY);
+      criteriaY += 22;
+    });
+    y += criteria.length * 22 + 20 + 28;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    ctx.font = '500 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Best streak', width / 2, y);
+    y += 24;
+
+    ctx.fillStyle = SHARE_THEME.accent;
+    ctx.font = '800 72px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(String(summary.bestStreak), width / 2, y);
+    y += 78;
+
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    ctx.font = '500 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('correct in a row', width / 2, y);
+    y += 26;
+
+    y = drawBestStreakHistoryBox(ctx, summary.successes, summary.mode, width, y, contentWidth);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = SHARE_THEME.textMuted;
+    ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('Play Geo Quiz', width / 2, height - 36);
+    ctx.fillStyle = SHARE_THEME.primary;
+    ctx.font = '500 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    var url = getGameShareUrl();
+    var urlLines = wrapCanvasLines(ctx, url, contentWidth);
+    urlLines.forEach(function (line, index) {
+      ctx.fillText(line, width / 2, height - 22 - (urlLines.length - 1 - index) * 14);
+    });
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function buildBestStreakShareImageBlob(summary) {
+    return new Promise(function (resolve, reject) {
+      if (!summary || !summary.mode || !summary.route) {
+        reject(new Error('Missing best streak summary'));
+        return;
+      }
+      var width = 600;
+      var measureCanvas = document.createElement('canvas');
+      var measureCtx = measureCanvas.getContext('2d');
+      if (!measureCtx) {
+        reject(new Error('Canvas unavailable'));
+        return;
+      }
+      var contentWidth = width - 64;
+      var height = measureBestShareCardHeight(measureCtx, summary, contentWidth);
+
+      var canvas = document.createElement('canvas');
+      var scale = 2;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas unavailable'));
+        return;
+      }
+      ctx.scale(scale, scale);
+      drawBestStreakShareCard(ctx, summary, width, height);
+      canvas.toBlob(function (blob) {
+        if (blob) resolve(blob);
+        else reject(new Error('Could not create image'));
+      }, 'image/png');
+    });
+  }
+
   function drawStreakShareCard(ctx, summary, width, height) {
     var pad = 32;
     var contentWidth = width - pad * 2;
@@ -3741,11 +4167,11 @@
     });
   }
 
-  function downloadShareImage(blob) {
+  function downloadShareImage(blob, fileName) {
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
-    link.download = 'geo-quiz-streak.png';
+    link.download = fileName || 'geo-quiz-streak.png';
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -3765,21 +4191,27 @@
     return navigator.share(data);
   }
 
-  function copyShareText(text) {
+  function copyShareText(text, fileName) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text).then(function () {
         window.alert('Image saved and share text copied to your clipboard.');
       });
     }
-    window.alert('Image saved to your downloads — attach geo-quiz-streak.png when you share.');
+    window.alert(
+      'Image saved to your downloads — attach ' + (fileName || 'geo-quiz-streak.png') + ' when you share.'
+    );
     return Promise.resolve();
   }
 
-  function shareImageBlob(blob) {
-    var shareText = '🌍 My Geo Quiz streak! Play: ' + getGameShareUrl();
-    var file = new File([blob], 'geo-quiz-streak.png', { type: 'image/png' });
-    var withFiles = { files: [file], title: 'Geo Quiz Streak', text: shareText };
-    var textOnly = { title: 'Geo Quiz Streak', text: shareText, url: getGameShareUrl() };
+  function shareImageBlob(blob, options) {
+    var opts = options || {};
+    var shareUrl = getGameShareUrl();
+    var shareText = opts.text || shareUrl;
+    var fileName = opts.fileName || 'geo-quiz-streak.png';
+    var title = opts.title || 'Geo Quiz Streak';
+    var file = new File([blob], fileName, { type: 'image/png' });
+    var withFiles = { files: [file], title: title, text: shareText };
+    var textOnly = { title: title, text: shareText, url: shareUrl };
 
     return tryNativeShare(withFiles)
       .catch(function (err) {
@@ -3788,8 +4220,8 @@
       })
       .catch(function (err) {
         if (err && err.name === 'AbortError') return Promise.reject(err);
-        downloadShareImage(blob);
-        return copyShareText(shareText);
+        downloadShareImage(blob, fileName);
+        return copyShareText(shareText, fileName);
       });
   }
 
@@ -3807,6 +4239,51 @@
     shareNameCallback = null;
     shareNameInput.value = '';
     shareNameSubmit.disabled = true;
+  }
+
+  function openBestStreakHistory(mode, route, wordsStyle, wordKey) {
+    var stats = getRouteStatsFor(mode, route, wordsStyle, wordKey);
+    if (!stats || stats.bestStreak === 0) return;
+
+    var hasHistory = !!(stats.bestStreakHistory && stats.bestStreakHistory.length > 0);
+    activeBestStreakView = {
+      mode: mode,
+      route: route,
+      wordsStyle: wordsStyle,
+      wordKey: wordKey,
+      bestStreak: stats.bestStreak,
+      successes: hasHistory ? stats.bestStreakHistory.slice() : []
+    };
+
+    bestStreakTitle.textContent = '🏅 Best: ' + stats.bestStreak;
+    bestStreakSubtitle.textContent = buildGameModeLabel(mode, route, wordsStyle, wordKey);
+
+    if (hasHistory) {
+      bestStreakListWrap.classList.remove('hidden');
+      bestStreakUnavailable.classList.add('hidden');
+      bestStreakList.innerHTML = buildSuccessListHtml(stats.bestStreakHistory, mode);
+    } else {
+      bestStreakListWrap.classList.add('hidden');
+      bestStreakUnavailable.classList.remove('hidden');
+      bestStreakList.innerHTML = '';
+    }
+
+    if (btnBestStreakShare) {
+      btnBestStreakShare.disabled = !hasHistory;
+      if (bestStreakShareLabel) bestStreakShareLabel.textContent = 'Share';
+    }
+
+    bestStreakOverlay.classList.remove('hidden');
+  }
+
+  function closeBestStreakHistory() {
+    bestStreakOverlay.classList.add('hidden');
+    activeBestStreakView = null;
+  }
+
+  function openCurrentBestStreakHistory() {
+    if (!currentMode || !currentRoute) return;
+    openBestStreakHistory(currentMode, currentRoute, currentWordsStyle, currentFixedWordKey);
   }
 
   function openShareNamePrompt(onSubmit) {
@@ -3829,7 +4306,9 @@
     btnStreakEndShare.disabled = true;
     if (streakEndShareLabel) streakEndShareLabel.textContent = 'Preparing…';
     buildStreakShareImageBlob(lastStreakEndSummary)
-      .then(shareImageBlob)
+      .then(function (blob) {
+        return shareImageBlob(blob);
+      })
       .catch(function (err) {
         if (err && err.name === 'AbortError') return;
         window.alert('Could not create share image. Please try again.');
@@ -3838,6 +4317,38 @@
         btnStreakEndShare.disabled = false;
         if (streakEndShareLabel) streakEndShareLabel.textContent = 'Share';
       });
+  }
+
+  function proceedShareBestStreak() {
+    if (!activeBestStreakView || !activeBestStreakView.successes.length) return;
+    if (btnBestStreakShare) btnBestStreakShare.disabled = true;
+    if (bestStreakShareLabel) bestStreakShareLabel.textContent = 'Preparing…';
+    buildBestStreakShareImageBlob(activeBestStreakView)
+      .then(function (blob) {
+        return shareImageBlob(blob, {
+          fileName: 'geo-quiz-best-streak.png',
+          title: 'Geo Quiz Best Streak'
+        });
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        window.alert('Could not create share image. Please try again.');
+      })
+      .finally(function () {
+        if (btnBestStreakShare) {
+          btnBestStreakShare.disabled = !(activeBestStreakView && activeBestStreakView.successes.length);
+        }
+        if (bestStreakShareLabel) bestStreakShareLabel.textContent = 'Share';
+      });
+  }
+
+  function shareBestStreak() {
+    if (!activeBestStreakView || !activeBestStreakView.successes.length) return;
+    if (!player.name || !player.name.trim()) {
+      openShareNamePrompt(proceedShareBestStreak);
+      return;
+    }
+    proceedShareBestStreak();
   }
 
   function shareStreak() {
@@ -3883,6 +4394,7 @@
     };
     document.getElementById('streak-end-count').textContent = lostStreak;
     document.getElementById('streak-end-best').textContent = bestStreak;
+    if (btnStreakEndBest) btnStreakEndBest.disabled = bestStreak === 0;
     renderSuccessList(successes);
     renderStreakEndLostFlag(lostCode, lostName);
     streakEndChosen.textContent = chosen;
@@ -4281,6 +4793,7 @@
     if (!currentMode || !currentRoute) return;
     var stats = getRouteStats();
     stats.bestStreak = 0;
+    stats.bestStreakHistory = null;
     savePlayer();
     updateStreakUI(stats.currentStreak, 0, false);
     updateHomeStats();
@@ -4292,6 +4805,44 @@
 
   btnGameHome.addEventListener('click', goHome);
   btnStreakEndHome.addEventListener('click', goHome);
+
+  if (btnStreakEndBest) {
+    btnStreakEndBest.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openCurrentBestStreakHistory();
+    });
+  }
+
+  if (gameBestStreakBtn) {
+    gameBestStreakBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openCurrentBestStreakHistory();
+    });
+  }
+
+  if (btnBestStreakClose) {
+    btnBestStreakClose.addEventListener('click', closeBestStreakHistory);
+  }
+
+  if (btnBestStreakShare) {
+    btnBestStreakShare.addEventListener('click', shareBestStreak);
+  }
+
+  if (bestStreakOverlay) {
+    bestStreakOverlay.addEventListener('click', function (e) {
+      if (e.target === bestStreakOverlay) closeBestStreakHistory();
+    });
+  }
+
+  screens.route.addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-action="best-history"]');
+    if (!chip || chip.disabled || !pendingMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var route = chip.getAttribute('data-route');
+    if (!route) return;
+    openBestStreakHistory(pendingMode, route, pendingWordsStyle, pendingFixedWordKey);
+  });
 
   if (streakHeroEl) {
     streakHeroEl.addEventListener('dblclick', function (e) {
@@ -4306,6 +4857,7 @@
 
   document.getElementById('screen-game').addEventListener('click', function (e) {
     if (e.target.closest('.btn-home')) return;
+    if (e.target.closest('#game-best-streak-btn')) return;
     if (celebrationActive) dismissCelebration();
     else if (correctSuccessActive) dismissCorrectSuccess();
     else if (wrongMarkActive) dismissWrongMark();
@@ -4404,7 +4956,8 @@
   });
 
   document.querySelectorAll('.route-card[data-route]').forEach(function (card) {
-    card.addEventListener('click', function () {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('[data-action="best-history"]')) return;
       if (!pendingMode) return;
       var route = card.getAttribute('data-route');
       if (pendingMode === 'words') {
