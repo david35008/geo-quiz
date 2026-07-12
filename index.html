@@ -53,7 +53,7 @@
 
     .screen.active { display: flex; }
 
-    /* Name screen — removed; share name collected via modal on WhatsApp share */
+    /* Share name collected via modal when sharing without a saved player name */
 
     .btn {
       display: inline-flex;
@@ -1481,6 +1481,26 @@
       padding: 0 8px;
     }
 
+    .streak-end-lost-flag {
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .streak-end-lost-flag-emoji {
+      display: block;
+      font-size: clamp(2.75rem, 14vw, 3.75rem);
+      line-height: 1.1;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+    }
+
+    .streak-end-lost-flag-name {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
     .streak-end-missed {
       margin-bottom: 10px;
     }
@@ -1618,15 +1638,15 @@
     }
 
     .streak-end-actions .btn-play-again {
-      background: linear-gradient(180deg, #81d4fa 0%, var(--primary) 100%);
-      color: #0f1419;
+      background: linear-gradient(180deg, #81c784 0%, #43a047 100%);
+      color: #fff;
       border: none;
-      box-shadow: 0 4px 14px rgba(79, 195, 247, 0.35);
+      box-shadow: 0 4px 14px rgba(67, 160, 71, 0.35);
     }
 
     .streak-end-actions .btn-play-again:hover:not(:disabled) {
-      background: linear-gradient(180deg, #b3e5fc 0%, #81d4fa 100%);
-      box-shadow: 0 6px 18px rgba(79, 195, 247, 0.45);
+      background: linear-gradient(180deg, #a5d6a7 0%, #66bb6a 100%);
+      box-shadow: 0 6px 18px rgba(67, 160, 71, 0.45);
     }
 
     .streak-end-actions .btn-other-games {
@@ -1641,16 +1661,16 @@
       box-shadow: 0 6px 18px rgba(255, 183, 77, 0.42);
     }
 
-    .streak-end-actions .btn-whatsapp {
-      background: #25D366;
-      color: #fff;
-      border: none;
-      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    .streak-end-actions .btn-share {
+      background: #fff;
+      color: #0f1419;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
     }
 
-    .streak-end-actions .btn-whatsapp:hover:not(:disabled) {
-      background: #20bd5a;
-      box-shadow: 0 6px 18px rgba(37, 211, 102, 0.45);
+    .streak-end-actions .btn-share:hover:not(:disabled) {
+      background: #f5f5f5;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
     }
   </style>
 </head>
@@ -1819,6 +1839,11 @@
         <p class="streak-end-sublabel">correct in a row</p>
         <p class="streak-end-best">🏅 Best: <span id="streak-end-best">0</span></p>
         <div class="streak-end-answers" id="streak-end-answers">
+          <div class="streak-end-lost-flag hidden" id="streak-end-lost-flag">
+            <span class="streak-end-answer-label">Lost on</span>
+            <span class="streak-end-lost-flag-emoji" id="streak-end-lost-flag-emoji"></span>
+            <span class="streak-end-lost-flag-name" id="streak-end-lost-flag-name"></span>
+          </div>
           <p class="streak-end-missed">
             <span class="streak-end-answer-label">You picked</span>
             <span class="streak-end-missed-value" id="streak-end-chosen"></span>
@@ -1834,19 +1859,19 @@
         <div class="streak-end-list" id="streak-end-list"></div>
       </div>
       <div class="streak-end-actions">
-        <button class="btn btn-play-again" id="streak-end-continue" type="button">
-          <span class="btn-icon" aria-hidden="true">🔁</span>
-          Play again!
+        <button class="btn btn-share" id="streak-end-share" type="button">
+          <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          <span id="streak-end-share-label">Share</span>
         </button>
         <button class="btn btn-other-games" id="streak-end-other-games" type="button">
           <span class="btn-icon" aria-hidden="true">🎮</span>
           Other Games
         </button>
-        <button class="btn btn-whatsapp" id="streak-end-share" type="button">
-          <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.884 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-          </svg>
-          <span id="streak-end-share-label">Share with friends</span>
+        <button class="btn btn-play-again" id="streak-end-continue" type="button">
+          <span class="btn-icon" aria-hidden="true">🔁</span>
+          Play again!
         </button>
       </div>
     </div>
@@ -2536,7 +2561,16 @@
       prepareGameScreen(mode, route, wordsStyle, wordKey);
       var se = session.streakEnd;
       updateStreakUI(0, se.bestStreak, false);
-      showStreakEndSummary(se.lostStreak, se.bestStreak, se.successes, se.chosen, se.correct, true);
+      showStreakEndSummary(
+        se.lostStreak,
+        se.bestStreak,
+        se.successes,
+        se.chosen,
+        se.correct,
+        se.lostCode,
+        se.lostName,
+        true
+      );
       return true;
     }
 
@@ -2801,6 +2835,9 @@
   var streakEndList = document.getElementById('streak-end-list');
   var streakEndChosen = document.getElementById('streak-end-chosen');
   var streakEndCorrect = document.getElementById('streak-end-correct');
+  var streakEndLostFlag = document.getElementById('streak-end-lost-flag');
+  var streakEndLostFlagEmoji = document.getElementById('streak-end-lost-flag-emoji');
+  var streakEndLostFlagName = document.getElementById('streak-end-lost-flag-name');
   var btnStreakEndContinue = document.getElementById('streak-end-continue');
   var btnStreakEndShare = document.getElementById('streak-end-share');
   var streakEndShareLabel = document.getElementById('streak-end-share-label');
@@ -3367,7 +3404,15 @@
         return;
       }
       showWrongMark(function () {
-        showStreakEndSummary(lostStreak, bestStreak, successes, chosen, q.correct);
+        showStreakEndSummary(
+          lostStreak,
+          bestStreak,
+          successes,
+          chosen,
+          q.correct,
+          q.country.code,
+          q.country.name
+        );
       });
     }
   }
@@ -3709,27 +3754,43 @@
     }, 1000);
   }
 
-  function shareImageBlob(blob) {
-    var file = new File([blob], 'geo-quiz-streak.png', { type: 'image/png' });
-    var shareText = '🌍 My Geo Quiz streak! Play: ' + getGameShareUrl();
-    var shareData = { files: [file], title: 'Geo Quiz Streak', text: shareText };
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      return navigator.share(shareData).catch(function () {
-        downloadShareImage(blob);
-        window.open(
-          'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n(Image saved — attach geo-quiz-streak.png)'),
-          '_blank',
-          'noopener,noreferrer'
-        );
+  function canSharePayload(data) {
+    if (!navigator.share) return false;
+    if (navigator.canShare) return navigator.canShare(data);
+    return true;
+  }
+
+  function tryNativeShare(data) {
+    if (!canSharePayload(data)) return Promise.reject(new Error('share-unavailable'));
+    return navigator.share(data);
+  }
+
+  function copyShareText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () {
+        window.alert('Image saved and share text copied to your clipboard.');
       });
     }
-    downloadShareImage(blob);
-    window.open(
-      'https://wa.me/?text=' + encodeURIComponent(shareText + '\n\n(Image saved — attach geo-quiz-streak.png)'),
-      '_blank',
-      'noopener,noreferrer'
-    );
+    window.alert('Image saved to your downloads — attach geo-quiz-streak.png when you share.');
     return Promise.resolve();
+  }
+
+  function shareImageBlob(blob) {
+    var shareText = '🌍 My Geo Quiz streak! Play: ' + getGameShareUrl();
+    var file = new File([blob], 'geo-quiz-streak.png', { type: 'image/png' });
+    var withFiles = { files: [file], title: 'Geo Quiz Streak', text: shareText };
+    var textOnly = { title: 'Geo Quiz Streak', text: shareText, url: getGameShareUrl() };
+
+    return tryNativeShare(withFiles)
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return Promise.reject(err);
+        return tryNativeShare(textOnly);
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return Promise.reject(err);
+        downloadShareImage(blob);
+        return copyShareText(shareText);
+      });
   }
 
   function savePlayerName(name) {
@@ -3763,41 +3824,67 @@
     if (callback) callback();
   }
 
-  function proceedShareStreakOnWhatsApp() {
+  function proceedShareStreak() {
     if (!lastStreakEndSummary || !currentMode || !currentRoute) return;
     btnStreakEndShare.disabled = true;
     if (streakEndShareLabel) streakEndShareLabel.textContent = 'Preparing…';
     buildStreakShareImageBlob(lastStreakEndSummary)
       .then(shareImageBlob)
-      .catch(function () {
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
         window.alert('Could not create share image. Please try again.');
       })
       .finally(function () {
         btnStreakEndShare.disabled = false;
-        if (streakEndShareLabel) streakEndShareLabel.textContent = 'Share with friends';
+        if (streakEndShareLabel) streakEndShareLabel.textContent = 'Share';
       });
   }
 
-  function shareStreakOnWhatsApp() {
+  function shareStreak() {
     if (!lastStreakEndSummary || !currentMode || !currentRoute) return;
     if (!player.name || !player.name.trim()) {
-      openShareNamePrompt(proceedShareStreakOnWhatsApp);
+      openShareNamePrompt(proceedShareStreak);
       return;
     }
-    proceedShareStreakOnWhatsApp();
+    proceedShareStreak();
   }
 
-  function showStreakEndSummary(lostStreak, bestStreak, successes, chosen, correct, skipSave) {
+  function renderStreakEndLostFlag(lostCode, lostName) {
+    if (!streakEndLostFlag || !streakEndLostFlagEmoji || !streakEndLostFlagName) return;
+    if (!lostCode) {
+      streakEndLostFlag.classList.add('hidden');
+      streakEndLostFlagEmoji.textContent = '';
+      streakEndLostFlagName.textContent = '';
+      return;
+    }
+    streakEndLostFlag.classList.remove('hidden');
+    streakEndLostFlagEmoji.textContent = flagEmoji(lostCode);
+    streakEndLostFlagName.textContent = lostName || '';
+  }
+
+  function showStreakEndSummary(
+    lostStreak,
+    bestStreak,
+    successes,
+    chosen,
+    correct,
+    lostCode,
+    lostName,
+    skipSave
+  ) {
     lastStreakEndSummary = {
       lostStreak: lostStreak,
       bestStreak: bestStreak,
       successes: successes.slice(),
       chosen: chosen,
-      correct: correct
+      correct: correct,
+      lostCode: lostCode,
+      lostName: lostName
     };
     document.getElementById('streak-end-count').textContent = lostStreak;
     document.getElementById('streak-end-best').textContent = bestStreak;
     renderSuccessList(successes);
+    renderStreakEndLostFlag(lostCode, lostName);
     streakEndChosen.textContent = chosen;
     streakEndCorrect.textContent = correct;
     if (!skipSave) {
@@ -3808,7 +3895,9 @@
           bestStreak: bestStreak,
           successes: successes,
           chosen: chosen,
-          correct: correct
+          correct: correct,
+          lostCode: lostCode,
+          lostName: lostName
         }
       });
     }
@@ -4198,7 +4287,7 @@
   }
 
   btnStreakEndContinue.addEventListener('click', dismissStreakEndSummary);
-  btnStreakEndShare.addEventListener('click', shareStreakOnWhatsApp);
+  btnStreakEndShare.addEventListener('click', shareStreak);
   btnStreakEndOtherGames.addEventListener('click', goHome);
 
   btnGameHome.addEventListener('click', goHome);
