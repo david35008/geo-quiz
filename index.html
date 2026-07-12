@@ -3210,18 +3210,23 @@
   }
 
   // --- Question generation ---
-  function pickCountryForStreak(streak) {
+  function pickUnusedCountryForStreak(streak, usedCodes) {
+    var available = COUNTRIES.filter(function (c) {
+      return usedCodes.indexOf(c.code) === -1;
+    });
+    if (available.length === 0) return null;
+
     var targetTier = Math.min(Math.floor(streak / STREAK_MILESTONE) + 1, 5);
     var tierMinus = Math.max(1, targetTier - 1);
     var tierPlus = Math.min(5, targetTier + 1);
     var roll = Math.random();
-    var tier;
-    if (roll < 0.6) tier = targetTier;
-    else if (roll < 0.85) tier = tierMinus;
-    else tier = tierPlus;
+    var preferredTier;
+    if (roll < 0.6) preferredTier = targetTier;
+    else if (roll < 0.85) preferredTier = tierMinus;
+    else preferredTier = tierPlus;
 
-    var pool = COUNTRIES.filter(function (c) { return c.difficulty === tier; });
-    if (pool.length === 0) pool = COUNTRIES;
+    var tierPool = available.filter(function (c) { return c.difficulty === preferredTier; });
+    var pool = tierPool.length > 0 ? tierPool : available;
     return pickRandom(pool);
   }
 
@@ -3292,11 +3297,7 @@
         wordKey = WORD_KEYS[0];
       }
     } else {
-      var attempts = 0;
-      do {
-        country = pickCountryForStreak(streak);
-        attempts++;
-      } while (state.usedCodes.indexOf(country.code) !== -1 && attempts < 50);
+      country = pickUnusedCountryForStreak(streak, state.usedCodes);
       if (mode === 'words' && currentWordsStyle === 'fixed' && currentFixedWordKey) {
         wordKey = currentFixedWordKey;
       } else {
@@ -3372,9 +3373,6 @@
       gameState.orderedIndex++;
     } else {
       gameState.usedCodes.push(gameState.currentQuestion.country.code);
-      if (gameState.usedCodes.length > 30) {
-        gameState.usedCodes = gameState.usedCodes.slice(-20);
-      }
     }
     gameState.questionStartTime = Date.now();
     displayQuestion(gameState.currentQuestion);
@@ -3876,7 +3874,11 @@
   }
 
   function dismissStreakEndSummary() {
-    if (currentRoute === 'ordered') resetOrderedProgress();
+    if (currentRoute === 'ordered') {
+      resetOrderedProgress();
+    } else if (gameState) {
+      gameState.usedCodes = [];
+    }
     showScreen('game');
     nextQuestion();
   }
