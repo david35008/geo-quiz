@@ -291,10 +291,10 @@
     }
 
     .streak-history-wrap {
-      flex: 1;
+      flex: 0 1 auto;
       min-height: 0;
-      max-height: min(50%, 280px);
-      min-height: 96px;
+      max-height: min(38%, 220px);
+      min-height: 64px;
       display: flex;
       flex-direction: column;
       margin: 8px 12px 0;
@@ -302,6 +302,12 @@
       border-radius: var(--radius);
       overflow: hidden;
       position: relative;
+    }
+
+    .streak-history-wrap.is-empty {
+      flex: 0 0 auto;
+      max-height: 72px;
+      min-height: 56px;
     }
 
     .streak-history.is-hidden {
@@ -972,166 +978,176 @@
       flex: 1;
       min-height: 0;
       width: 100%;
-      max-width: 100%;
       display: grid;
       touch-action: none;
-      grid-template-columns: minmax(44px, min(30vw, 136px)) minmax(0, 1fr) minmax(44px, min(30vw, 136px));
-      grid-template-rows: auto auto;
-      row-gap: 4px;
-      column-gap: 4px;
-      padding: 8px 6px 56px;
-      position: relative;
-      align-content: center;
-      align-items: stretch;
-      justify-items: stretch;
-      overflow-x: hidden;
-      box-sizing: border-box;
-    }
-
-    .side-stack {
-      display: flex;
-      flex-direction: column;
+      grid-template-columns: max-content minmax(0, 1fr) max-content;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        ". up ."
+        "left flag right"
+        ". down .";
       gap: 4px;
-      grid-row: 2;
-      align-self: stretch;
-      align-items: stretch;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      min-height: 0;
-      position: relative;
-      z-index: 3;
+      padding: 4px;
       overflow: hidden;
       box-sizing: border-box;
-    }
-
-    .side-stack-left { grid-column: 1; justify-self: stretch; }
-    .side-stack-right { grid-column: 3; justify-self: stretch; }
-
-    .side-stack .dir-left,
-    .side-stack .dir-right {
-      flex-shrink: 0;
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      min-height: 44px;
-      white-space: normal;
-      overflow: hidden;
-      overflow-wrap: break-word;
-      word-break: normal;
-      box-sizing: border-box;
-    }
-
-    .side-stack .side-label {
-      flex: 1 1 0;
-      min-height: 0;
-      width: 100%;
-      max-width: 100%;
-      align-self: stretch;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    .side-stack-left .side-label {
-      writing-mode: vertical-lr;
-    }
-
-    .side-stack-right .side-label {
-      writing-mode: vertical-rl;
-    }
-
-    .side-label {
-      display: grid;
-      place-items: center;
-      align-content: center;
-      justify-content: center;
-      text-align: center;
-      width: 100%;
-      max-width: 100%;
-      height: 100%;
-      min-height: 0;
-      min-width: 0;
-      text-orientation: mixed;
-      letter-spacing: 0.03em;
-      padding: 8px 4px;
-      background: var(--surface);
-      border-radius: var(--radius);
-      color: var(--text-muted);
-      font-size: clamp(0.72rem, 2.4vw, 0.88rem);
-      font-weight: 600;
-      line-height: 1.2;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: background 0.15s, transform 0.15s, box-shadow 0.15s, color 0.15s;
-      white-space: normal;
-      overflow: hidden;
-      overflow-wrap: break-word;
-      word-break: normal;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 3;
-    }
-
-    .side-label:hover { background: var(--surface-hover); color: var(--text); }
-    .side-label.highlight {
-      border-color: var(--primary);
-      box-shadow: 0 0 16px rgba(79, 195, 247, 0.4);
-      color: var(--text);
-      transform: scale(1.03);
-    }
-
-    .side-label-left,
-    .side-label-right {
-      width: 100%;
+      --flag-nudge: 40px;
     }
 
     #opt-up {
-      grid-column: 1 / -1;
-      grid-row: 1;
-      writing-mode: horizontal-tb;
-      align-self: center;
-      justify-self: center;
-      width: min(100%, 420px);
-    }
-    .flag-stack {
-      grid-column: 2;
-      grid-row: 2;
-      align-self: start;
-      justify-self: center;
-      width: 100%;
+      grid-area: up;
+      justify-self: stretch;
+      align-self: end;
       max-width: 100%;
+    }
+
+    #opt-left {
+      grid-area: left;
+      justify-self: end;
+      align-self: stretch;
+      width: min(30vw, 128px);
+      min-width: min(22vw, 80px);
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+    }
+
+    #opt-right {
+      grid-area: right;
+      justify-self: start;
+      align-self: stretch;
+      width: min(30vw, 128px);
+      min-width: min(22vw, 80px);
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+    }
+
+    .side-option {
+      padding: 8px 6px;
+    }
+
+    .side-option-text {
+      flex: 0 0 auto;
+      width: 100%;
+      text-align: center;
+      line-height: 1.2;
+      overflow: hidden;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }
+
+    .flag-stack {
+      grid-area: flag;
       min-width: 0;
-      margin-top: 4px;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
+      container-type: size;
+      z-index: 2;
+    }
+
+    #opt-down {
+      grid-area: down;
+      justify-self: stretch;
+      align-self: start;
+      max-width: 100%;
     }
 
     .flag-country-name {
+      flex-shrink: 0;
       width: 100%;
       text-align: center;
-      font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+      font-size: clamp(0.8rem, 2.5vmin, 1rem);
       font-weight: 600;
       line-height: 1.25;
       color: var(--text);
       margin-bottom: 4px;
       padding: 0 4px;
-      overflow-wrap: break-word;
-      word-break: normal;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
     }
 
     .flag-country-name.hidden { display: none; }
 
-    #game-flag { width: 100%; }
-    #opt-down {
-      position: absolute;
-      left: 50%;
-      bottom: max(6px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      width: min(calc(100% - 16px), 420px);
-      writing-mode: horizontal-tb;
-      z-index: 3;
+    .flag-center {
+      flex: 1 1 0;
+      min-height: 0;
+      min-width: 0;
+      width: min(100cqw, 100cqh);
+      height: min(100cqw, 100cqh);
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: min(92cqw, 92cqh);
+      line-height: 1;
+      overflow: hidden;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+      transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    @supports not (width: 1cqw) {
+      .flag-center {
+        width: min(85vmin, 100%);
+        height: min(85vmin, 100%);
+        font-size: min(78vmin, 100%);
+      }
+    }
+
+    @media (max-height: 520px) {
+      .streak-history-wrap {
+        max-height: min(30%, 140px);
+        min-height: 52px;
+      }
+
+      .streak-history-wrap.is-empty {
+        max-height: 60px;
+        min-height: 48px;
+      }
+
+      .game-header {
+        padding: 6px 12px 4px;
+      }
+
+      .game-header .prompt {
+        font-size: 0.82rem;
+        padding: 2px 0 0;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+      #screen-game .game-header {
+        padding: 4px 12px 2px;
+        gap: 0;
+      }
+
+      #screen-game .game-header .prompt {
+        font-size: 0.78rem;
+        padding: 2px 0 0;
+      }
+
+      .streak-history-wrap.is-empty {
+        display: none;
+      }
+
+      .streak-history-wrap {
+        max-height: 72px;
+        min-height: 0;
+        margin: 4px 8px 0;
+      }
+
+      .swipe-hint {
+        padding: 2px 8px 4px;
+        font-size: 0.72rem;
+      }
     }
 
     /* Phone: compact flex layout — no page scroll */
@@ -1181,63 +1197,8 @@
       }
 
       .game-area {
-        grid-template-columns: minmax(40px, min(32vw, 128px)) minmax(0, 1fr) minmax(40px, min(32vw, 128px));
-        grid-template-rows: auto auto;
-        row-gap: 4px;
-        column-gap: 4px;
-        padding: 4px 6px 56px;
-        align-content: center;
-        align-items: stretch;
-        overflow-x: hidden;
-      }
-
-      #opt-up {
-        width: min(100%, 280px);
-      }
-
-      .flag-stack {
-        margin-top: 6px;
-      }
-
-      #opt-down {
-        width: min(calc(100% - 16px), 280px);
-        bottom: max(4px, env(safe-area-inset-bottom));
-      }
-
-      .side-label {
-        font-size: clamp(0.68rem, 2.2vw, 0.82rem);
-        padding: 6px 3px;
-        overflow: hidden;
-        overflow-wrap: break-word;
-      }
-
-      .dir-left,
-      .dir-right {
-        max-width: 100%;
-        font-size: clamp(0.82rem, 3.2vw, 1.05rem);
-        min-height: 44px;
-        padding: 6px 4px;
-        height: auto;
-        overflow-wrap: break-word;
-        word-break: normal;
-        hyphens: none;
-        overflow: hidden;
-      }
-
-      .dir-up {
-        max-width: min(100%, 280px);
-        font-size: clamp(0.95rem, 3.8vw, 1.2rem);
-      }
-
-      .dir-down {
-        max-width: min(100%, 280px);
-        min-height: 44px;
-        height: auto;
-      }
-
-      .flag-center {
-        min-height: clamp(80px, 20vw, 128px);
-        font-size: min(32vw, 26vh, 10rem);
+        gap: 3px;
+        padding: 3px;
       }
 
       .swipe-hint {
@@ -1254,60 +1215,47 @@
       background: var(--surface);
       border-radius: var(--radius);
       text-align: center;
-      font-size: clamp(1.05rem, 3.8vw, 1.45rem);
+      font-size: clamp(0.78rem, 2.6vmin, 1.15rem);
       font-weight: 600;
-      line-height: 1.25;
+      line-height: 1.2;
       cursor: pointer;
-      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+      transition: background 0.15s, box-shadow 0.15s;
       border: 2px solid transparent;
       min-height: 44px;
-      height: auto;
-      white-space: normal;
-      word-break: normal;
-      overflow-wrap: break-word;
-      hyphens: none;
+      max-height: min(20vh, 80px);
       overflow: hidden;
-      max-width: 100%;
+      overflow-wrap: break-word;
+      word-break: normal;
       box-sizing: border-box;
+    }
+
+    .dir-left,
+    .dir-right {
+      font-size: clamp(0.72rem, 2.2vmin, 1rem);
+    }
+
+    .dir-option.side-option {
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+    }
+
+    .side-option .side-option-text:first-child {
+      align-self: stretch;
+    }
+
+    .side-option .side-option-text:last-child {
+      align-self: stretch;
+      margin-top: auto;
     }
 
     .dir-option:hover { background: var(--surface-hover); }
     .dir-option.highlight {
       border-color: var(--primary);
       box-shadow: 0 0 16px rgba(79, 195, 247, 0.4);
-      transform: scale(1.05);
-    }
-
-    .dir-up    { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
-    .dir-down  { max-width: min(100%, 420px); font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
-    .dir-left,
-    .dir-right {
-      max-width: 100%;
-      font-size: clamp(0.95rem, 3.2vw, 1.2rem);
-      overflow-wrap: break-word;
-      word-break: normal;
-      hyphens: none;
-    }
-
-    .flag-center {
-      align-self: start;
-      justify-self: center;
-      width: 100%;
-      min-height: clamp(64px, 20vw, 128px);
-      max-height: min(30vw, 24vh);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: min(38vw, 48vh, 20rem);
-      line-height: 1;
-      padding: 0;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-      transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
-      will-change: transform;
-      cursor: grab;
-      touch-action: none;
-      z-index: 2;
-      user-select: none;
     }
 
     .flag-center.dragging {
@@ -1333,30 +1281,29 @@
 
     @keyframes flagDemoNudgeUp {
       0%, 100% { transform: translate(0, 0); }
-      45% { transform: translate(0, -56px); }
-      55% { transform: translate(0, -56px); }
+      45% { transform: translate(0, calc(-1 * var(--flag-nudge, 56px))); }
+      55% { transform: translate(0, calc(-1 * var(--flag-nudge, 56px))); }
     }
 
     @keyframes flagDemoNudgeDown {
       0%, 100% { transform: translate(0, 0); }
-      45% { transform: translate(0, 56px); }
-      55% { transform: translate(0, 56px); }
+      45% { transform: translate(0, var(--flag-nudge, 56px)); }
+      55% { transform: translate(0, var(--flag-nudge, 56px)); }
     }
 
     @keyframes flagDemoNudgeLeft {
       0%, 100% { transform: translate(0, 0); }
-      45% { transform: translate(-56px, 0); }
-      55% { transform: translate(-56px, 0); }
+      45% { transform: translate(calc(-1 * var(--flag-nudge, 56px)), 0); }
+      55% { transform: translate(calc(-1 * var(--flag-nudge, 56px)), 0); }
     }
 
     @keyframes flagDemoNudgeRight {
       0%, 100% { transform: translate(0, 0); }
-      45% { transform: translate(56px, 0); }
-      55% { transform: translate(56px, 0); }
+      45% { transform: translate(var(--flag-nudge, 56px), 0); }
+      55% { transform: translate(var(--flag-nudge, 56px), 0); }
     }
 
-    .game-area.is-dragging .dir-option,
-    .game-area.is-dragging .side-label {
+    .game-area.is-dragging .dir-option {
       pointer-events: none;
     }
 
@@ -1855,20 +1802,20 @@
         </div>
       </div>
       <div class="game-area" id="game-area">
-        <div class="dir-option dir-up"    data-dir="up"    id="opt-up"></div>
-        <div class="side-stack side-stack-left">
-          <div class="dir-option dir-left"  data-dir="left"  id="opt-left"></div>
-          <div class="side-label side-label-left" id="side-label-left" data-dir="left"></div>
+        <div class="dir-option dir-up" data-dir="up" id="opt-up"></div>
+        <div class="dir-option dir-left side-option" data-dir="left" id="opt-left">
+          <span class="side-option-text"></span>
+          <span class="side-option-text"></span>
         </div>
         <div class="flag-stack" id="flag-stack">
           <p class="flag-country-name hidden" id="game-country-name"></p>
           <div class="flag-center" id="game-flag"></div>
         </div>
-        <div class="side-stack side-stack-right">
-          <div class="dir-option dir-right" data-dir="right" id="opt-right"></div>
-          <div class="side-label side-label-right" id="side-label-right" data-dir="right"></div>
+        <div class="dir-option dir-right side-option" data-dir="right" id="opt-right">
+          <span class="side-option-text"></span>
+          <span class="side-option-text"></span>
         </div>
-        <div class="dir-option dir-down"  data-dir="down"  id="opt-down"></div>
+        <div class="dir-option dir-down" data-dir="down" id="opt-down"></div>
       </div>
     </div>
     <p class="swipe-hint" id="swipe-hint">Drag the flag toward your answer ↑ ↓ ← →</p>
@@ -1944,7 +1891,7 @@
   const STORAGE_KEY = 'geoQuizPlayer';
   const STREAK_MILESTONE = 5;
   const SWIPE_THRESHOLD = 40;
-  const FLAG_DRAG_MAX = 72;
+  const FLAG_DRAG_MAX = 56;
   const IDLE_DEMO_DELAY_MS = 5000;
   const IDLE_DEMO_REPEAT_DELAY_MS = 5000;
   const IDLE_DEMO_STEP_MS = 1000;
@@ -2883,6 +2830,7 @@
   var gameStreakEl = document.getElementById('game-streak');
   var streakHeroEl = document.querySelector('.streak-hero');
   var streakHistory = document.getElementById('streak-history');
+  var streakHistoryWrap = document.getElementById('streak-history-wrap');
 
   function makeSuccessEntry(q) {
     return {
@@ -2924,6 +2872,9 @@
   function renderStreakHistory() {
     if (!streakHistory || !currentMode) return;
     var successes = getRouteStats().runSuccesses;
+    if (streakHistoryWrap) {
+      streakHistoryWrap.classList.toggle('is-empty', successes.length === 0);
+    }
     if (successes.length === 0) {
       streakHistory.innerHTML =
         '<p class="streak-history-empty">Your correct answers will show up here</p>';
@@ -2947,10 +2898,26 @@
     left: document.getElementById('opt-left'),
     right: document.getElementById('opt-right')
   };
-  var sideLabelEls = {
-    left: document.getElementById('side-label-left'),
-    right: document.getElementById('side-label-right')
-  };
+
+  function setDirOptionText(dir, text) {
+    var el = dirEls[dir];
+    if (dir === 'left' || dir === 'right') {
+      el.querySelectorAll('.side-option-text').forEach(function (label) {
+        label.textContent = text;
+      });
+    } else {
+      el.textContent = text;
+    }
+    el.classList.remove('highlight');
+  }
+
+  function setDirHighlight(dir, on) {
+    dirEls[dir].classList.toggle('highlight', on);
+  }
+
+  function clearDirHighlights() {
+    DIRECTIONS.forEach(function (d) { setDirHighlight(d, false); });
+  }
 
   // --- State ---
   var player = defaultPlayer();
@@ -3350,13 +3317,8 @@
     document.getElementById('game-prompt').textContent = promptText;
 
     DIRECTIONS.forEach(function (dir) {
-      dirEls[dir].textContent = q.mapping[dir];
-      dirEls[dir].classList.remove('highlight');
+      setDirOptionText(dir, q.mapping[dir]);
     });
-    sideLabelEls.left.textContent = q.mapping.left;
-    sideLabelEls.right.textContent = q.mapping.right;
-    sideLabelEls.left.classList.remove('highlight');
-    sideLabelEls.right.classList.remove('highlight');
     resetFlagPosition();
     scheduleIdleDemo();
   }
@@ -4150,14 +4112,8 @@
   }
 
   function highlightDirection(dir) {
-    DIRECTIONS.forEach(function (d) { dirEls[d].classList.remove('highlight'); });
-    sideLabelEls.left.classList.remove('highlight');
-    sideLabelEls.right.classList.remove('highlight');
-    if (dir) {
-      dirEls[dir].classList.add('highlight');
-      if (dir === 'left') sideLabelEls.left.classList.add('highlight');
-      if (dir === 'right') sideLabelEls.right.classList.add('highlight');
-    }
+    clearDirHighlights();
+    if (dir) setDirHighlight(dir, true);
   }
 
   function isFlagTarget(target) {
@@ -4248,12 +4204,6 @@
 
   DIRECTIONS.forEach(function (dir) {
     dirEls[dir].addEventListener('click', function () {
-      handleAnswer(dir);
-    });
-  });
-
-  ['left', 'right'].forEach(function (dir) {
-    sideLabelEls[dir].addEventListener('click', function () {
       handleAnswer(dir);
     });
   });
